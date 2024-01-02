@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dual List Box Example</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div id="dual-list-container">
+    <div>
+      <h2>Available Events and Sessions</h2>
+      <select id="availableEvents" multiple>
+        <!-- Options for events and sessions will be filled by JavaScript -->
+      </select>
+    </div>
+
+    <div class="actions">
+      <button id="btnAdd"> &gt; </button>
+      <button id="btnRemove"> &lt; </button>
+    </div>
+
+    <div>
+      <h2>Selected Events and Sessions</h2>
+      <select id="selectedEvents" multiple>
+        <!-- Selected events will appear here -->
+      </select>
+    </div>
+  </div>
+
+  <button id="btnSave">Save</button>
+
+  <script src="main.js"></script>
+</body>
+
+</html>

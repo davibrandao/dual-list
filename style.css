@@ -1,0 +1,18 @@
+#dual-list-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 20px;
+}
+
+select {
+  width: 200px;
+  height: 300px;
+  margin: 10px;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
