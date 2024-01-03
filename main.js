@@ -1,96 +1,179 @@
+function DualListBox(selectors) {
+  this.availableList = document.querySelector(selectors.availableList);
+  this.selectedList = document.querySelector(selectors.selectedList);
+  this.btnAdd = document.querySelector(selectors.btnAdd);
+  this.btnRemove = document.querySelector(selectors.btnRemove);
+  this.btnSave = document.querySelector(selectors.btnSave);
 
-document.addEventListener('DOMContentLoaded', () => {
-  const availableEventsSelect = document.getElementById('availableEvents');
-  const selectedEventsSelect = document.getElementById('selectedEvents');
-  const btnAdd = document.getElementById('btnAdd');
-  const btnRemove = document.getElementById('btnRemove');
-  const btnSave = document.getElementById('btnSave');
+  this.data = this.formatData([
+    {
+      IDLevel1: "338187",
+      Level1Name: "mark's space",
+      IDLevel2: "506281",
+      Level2Name: "mark's space",
+      dateofsessionstart: "2023-12-23 14:51:00",
+      HasMeetingURL: "0",
+      currentevent: "1",
+    },
+    {
+      IDLevel1: "5406",
+      Level1Name:
+        "How to Use GoBrunch for Webinars and Meetings: Live Tutorial with Q&A",
+      IDLevel2: "8175",
+      Level2Name: "Using GoBrunch: Best Practices, Tips and Tricks",
+      dateofsessionstart: "2019-04-02 15:30:00",
+      HasMeetingURL: "0",
+      currentevent: "0",
+    },
+    {
+      IDLevel1: "5406",
+      IDLevel2: "817512",
+      Level2Name:
+        "Lorem ipsum dolor sit amet consectetur adipisicing elit. Ullam ea dolore tenetur rerum. Expedita, iure! Quod perspiciatis quisquam asperiores sed.",
+      dateofsessionstart: "2019-04-02 15:30:00",
+      HasMeetingURL: "0",
+      currentevent: "0",
+    },
+  ]);
 
-  const eventData = [
-    { idevent: "338187", eventname: "mark's space", idsession: "506281", linkname: "mark's space", dateofsessionstart: "2023-12-23 14:51:00", HasMeetingURL: "0", currentevent: "1" },
-    { idevent: "5406", eventname: "How to Use GoBrunch for Webinars and Meetings: Live Tutorial with Q&A", idsession: "8175", linkname: "Using GoBrunch: Best Practices, Tips and Tricks", dateofsessionstart: "2019-04-02 15:30:00", HasMeetingURL: "0", currentevent: "0" },
-    { idevent: "5406", eventname: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Ullam ea dolore tenetur rerum. Expedita, iure! Quod perspiciatis quisquam asperiores sed.", idsession: "8175", linkname: "    Lorem ipsum dolor sit amet consectetur adipisicing elit. Ullam ea dolore tenetur rerum. Expedita, iure! Quod perspiciatis quisquam asperiores sed.", dateofsessionstart: "2019-04-02 15:30:00", HasMeetingURL: "0", currentevent: "0" },
+  this.attachEventHandlers();
+}
 
-  ];
+DualListBox.prototype.formatData = function (rawData) {
+  var groupedData = {};
 
-  function processEventData(rawData) {
-    const eventsMap = new Map();
-
-    rawData.forEach(data => {
-      if (!eventsMap.has(data.idevent)) {
-        eventsMap.set(data.idevent, {
-          idevent: data.idevent,
-          eventname: data.eventname,
-          sessions: []
-        });
-      }
-      eventsMap.get(data.idevent).sessions.push({
-        idsession: data.idsession,
-        linkname: data.linkname,
-        dateofsessionstart: data.dateofsessionstart,
-        hasMeetingURL: data.HasMeetingURL === "1",
-        currentevent: data.currentevent === "1"
-      });
+  rawData.forEach(function (item) {
+    if (!groupedData[item.IDLevel1]) {
+      groupedData[item.IDLevel1] = {
+        IDLevel1: item.IDLevel1,
+        Level1Name: item.Level1Name,
+        Level2: [],
+      };
+    }
+    groupedData[item.IDLevel1].Level2.push({
+      IDLevel2: item.IDLevel2,
+      Level2Name: item.Level2Name,
     });
+  });
 
-    return Array.from(eventsMap.values());
+  return Object.values(groupedData);
+};
+
+DualListBox.prototype.attachEventHandlers = function () {
+  this.btnAdd.onclick = () =>
+    this.moveItems(this.availableList, this.selectedList);
+  this.btnRemove.onclick = () =>
+    this.moveItems(this.selectedList, this.availableList);
+  this.availableList.addEventListener("dblclick", (event) => {
+    if (event.target.tagName === "OPTGROUP") {
+      this.moveOptGroup(this.availableList, this.selectedList, event.target.id);
+    }
+  });
+  this.selectedList.addEventListener("dblclick", (event) => {
+    if (event.target.tagName === "OPTGROUP") {
+      this.moveOptGroup(this.selectedList, this.availableList, event.target.id);
+    }
+  });
+  this.btnSave.onclick = () => console.log(this.getSelectedItems());
+};
+
+DualListBox.prototype.moveItems = function (source, destination) {
+  // Movendo optgroups selecionados
+  Array.from(source.querySelectorAll('optgroup.selected')).forEach(optGroup => {
+    this.moveOptGroup(source, destination, optGroup.id);
+  });
+
+  // Movendo options selecionados individualmente (Level2)
+  Array.from(source.selectedOptions).forEach(option => {
+    if (option.parentNode.tagName === 'OPTGROUP' && !option.parentNode.classList.contains('selected')) {
+      this.moveOption(source, destination, option);
+    }
+  });
+
+  // Removendo optgroups vazios após a movimentação
+  this.removeEmptyOptGroups(destination);
+};
+
+DualListBox.prototype.moveOptGroup = function (source, destination, optGroupId) {
+  var optGroup = source.querySelector('optgroup[id="' + optGroupId + '"]');
+  if (optGroup) {
+    var existingOptGroup = destination.querySelector('optgroup[id="' + optGroupId + '"]');
+    if (existingOptGroup) {
+      existingOptGroup.remove();
+    }
+    var clonedOptGroup = optGroup.cloneNode(true);
+    destination.appendChild(clonedOptGroup);
+    optGroup.remove();
   }
+};
 
-  function populateSelect(select, events) {
-    select.innerHTML = '';
-
-    events.forEach(event => {
-      const optGroup = document.createElement('optgroup');
-      optGroup.label = event.eventname;
-      optGroup.id = `event-${event.idevent}`;
-
-      event.sessions.forEach(session => {
-        const option = document.createElement('option');
-        option.value = session.idsession;
-        option.textContent = session.linkname;
-        optGroup.appendChild(option);
-      });
-
-      select.appendChild(optGroup);
-    });
+DualListBox.prototype.moveOption = function (source, destination, option) {
+  var targetOptGroup = destination.querySelector('optgroup[id="' + option.parentNode.id + '"]');
+  if (!targetOptGroup) {
+    targetOptGroup = document.createElement('optgroup');
+    targetOptGroup.label = option.parentNode.label;
+    targetOptGroup.id = option.parentNode.id;
+    destination.appendChild(targetOptGroup);
   }
+  var clonedOption = option.cloneNode(true);
+  targetOptGroup.appendChild(clonedOption);
+  option.remove();
 
-  function moveSessions(sourceSelect, destinationSelect, eventId) {
-    const optGroup = sourceSelect.querySelector(`#event-${eventId}`);
-    if (optGroup) {
-      destinationSelect.appendChild(optGroup.cloneNode(true));
+  // Checagem e remoção de optgroup vazio após mover um option
+  if (option.parentNode && option.parentNode.children.length === 0) {
+    option.parentNode.remove();
+  }
+};
+
+DualListBox.prototype.removeEmptyOptGroups = function (list) {
+  var optGroups = list.querySelectorAll('optgroup');
+  optGroups.forEach(optGroup => {
+    if (optGroup.children.length === 0) {
       optGroup.remove();
     }
-  }
-
-  availableEventsSelect.addEventListener('dblclick', event => {
-    if (event.target.tagName === 'OPTGROUP') {
-      moveSessions(availableEventsSelect, selectedEventsSelect, event.target.id.split('-')[1]);
-    }
   });
+};
 
-  selectedEventsSelect.addEventListener('dblclick', event => {
-    if (event.target.tagName === 'OPTGROUP') {
-      moveSessions(selectedEventsSelect, availableEventsSelect, event.target.id.split('-')[1]);
-    }
-  });
+DualListBox.prototype.getSelectedItems = function () {
+  return Array.from(this.selectedList.querySelectorAll("optgroup")).map(
+    (group) => ({
+      IDLevel1: group.id,
+      Level1Name: group.label,
+      Level2: Array.from(group.querySelectorAll("option")).map((opt) => ({
+        IDLevel2: opt.value,
+        Level2Name: opt.textContent,
+      })),
+    })
+  );
+};
 
-  btnAdd.addEventListener('click', () => {
-    Array.from(availableEventsSelect.selectedOptions).forEach(option => {
-      moveSessions(availableEventsSelect, selectedEventsSelect, option.parentNode.id.split('-')[1]);
+DualListBox.prototype.render = function () {
+  this.populateList(this.availableList, this.data);
+};
+
+DualListBox.prototype.populateList = function (list, data) {
+  list.innerHTML = "";
+  data.forEach((level1) => {
+    var optGroup = document.createElement("optgroup");
+    optGroup.label = level1.Level1Name;
+    optGroup.id = level1.IDLevel1;
+    level1.Level2.forEach((level2) => {
+      var option = document.createElement("option");
+      option.value = level2.IDLevel2;
+      option.textContent = level2.Level2Name;
+      optGroup.appendChild(option);
     });
+    list.appendChild(optGroup);
   });
+};
 
-  btnRemove.addEventListener('click', () => {
-    Array.from(selectedEventsSelect.selectedOptions).forEach(option => {
-      moveSessions(selectedEventsSelect, availableEventsSelect, option.parentNode.id.split('-')[1]);
-    });
-  });
+var listBoxSelectors = {
+  availableList: "#availableEvents",
+  selectedList: "#selectedEvents",
+  btnAdd: "#btnAdd",
+  btnRemove: "#btnRemove",
+  btnSave: "#btnSave",
+};
 
-  btnSave.addEventListener('click', () => {
-    const selectedSessions = Array.from(selectedEventsSelect.querySelectorAll('option')).map(opt => opt.value);
-    console.log('Selected Sessions:', selectedSessions);
-  });
-
-  populateSelect(availableEventsSelect, processEventData(eventData));
-});
+var dualListBox = new DualListBox(listBoxSelectors);
+dualListBox.render();
