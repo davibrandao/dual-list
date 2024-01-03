@@ -108,20 +108,28 @@ DualListBox.prototype.moveOptGroup = function (source, destination, optGroupId) 
 };
 
 DualListBox.prototype.moveOption = function (source, destination, option) {
-  var targetOptGroup = destination.querySelector('optgroup[id="' + option.parentNode.id + '"]');
+  var sourceOptGroup = option.parentNode;
+  var targetOptGroup = destination.querySelector('optgroup[id="' + sourceOptGroup.id + '"]');
+
   if (!targetOptGroup) {
     targetOptGroup = document.createElement('optgroup');
-    targetOptGroup.label = option.parentNode.label;
-    targetOptGroup.id = option.parentNode.id;
+    targetOptGroup.label = sourceOptGroup.label;
+    targetOptGroup.id = sourceOptGroup.id;
     destination.appendChild(targetOptGroup);
   }
+
   var clonedOption = option.cloneNode(true);
   targetOptGroup.appendChild(clonedOption);
   option.remove();
 
-  // Checagem e remoção de optgroup vazio após mover um option
-  if (option.parentNode && option.parentNode.children.length === 0) {
-    option.parentNode.remove();
+  // Verifica se o optgroup de origem está vazio e remove se estiver
+  if (sourceOptGroup.children.length === 0) {
+    sourceOptGroup.remove();
+  }
+
+  // Verifica se o optgroup de destino está vazio após a movimentação e remove se estiver
+  if (targetOptGroup.children.length === 0) {
+    targetOptGroup.remove();
   }
 };
 
