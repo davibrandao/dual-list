@@ -1,58 +1,34 @@
-function DualListBox(selectors) {
+function DualListBox(selectors, initialData) {
   this.availableList = document.querySelector(selectors.availableList);
   this.selectedList = document.querySelector(selectors.selectedList);
   this.btnAdd = document.querySelector(selectors.btnAdd);
   this.btnRemove = document.querySelector(selectors.btnRemove);
   this.btnSave = document.querySelector(selectors.btnSave);
 
-  this.data = this.formatData([
-    {
-      IDLevel1: "338187",
-      Level1Name: "mark's space",
-      IDLevel2: "506281",
-      Level2Name: "mark's space",
-      dateofsessionstart: "2023-12-23 14:51:00",
-      HasMeetingURL: "0",
-      currentevent: "1",
-    },
-    {
-      IDLevel1: "5406",
-      Level1Name:
-        "How to Use GoBrunch for Webinars and Meetings: Live Tutorial with Q&A",
-      IDLevel2: "8175",
-      Level2Name: "Using GoBrunch: Best Practices, Tips and Tricks",
-      dateofsessionstart: "2019-04-02 15:30:00",
-      HasMeetingURL: "0",
-      currentevent: "0",
-    },
-    {
-      IDLevel1: "5406",
-      IDLevel2: "817512",
-      Level2Name:
-        "Lorem ipsum dolor sit amet consectetur adipisicing elit. Ullam ea dolore tenetur rerum. Expedita, iure! Quod perspiciatis quisquam asperiores sed.",
-      dateofsessionstart: "2019-04-02 15:30:00",
-      HasMeetingURL: "0",
-      currentevent: "0",
-    },
-  ]);
-
+  // Ajuste: Inicializa com dados passados como parâmetro
+  this.data = this.formatData(initialData || []);
   this.attachEventHandlers();
 }
+
+DualListBox.prototype.updateData = function (newData) {
+  this.data = this.formatData(newData);
+  this.render();
+};
 
 DualListBox.prototype.formatData = function (rawData) {
   var groupedData = {};
 
   rawData.forEach(function (item) {
-    if (!groupedData[item.IDLevel1]) {
-      groupedData[item.IDLevel1] = {
-        IDLevel1: item.IDLevel1,
-        Level1Name: item.Level1Name,
+    if (!groupedData[item.idlevel1]) {
+      groupedData[item.idlevel1] = {
+        idlevel1: item.idlevel1,
+        level1name: item.level1name,
         Level2: [],
       };
     }
-    groupedData[item.IDLevel1].Level2.push({
-      IDLevel2: item.IDLevel2,
-      Level2Name: item.Level2Name,
+    groupedData[item.idlevel1].Level2.push({
+      idlevel2: item.idlevel2,
+      level2name: item.level2name,
     });
   });
 
@@ -145,11 +121,11 @@ DualListBox.prototype.removeEmptyOptGroups = function (list) {
 DualListBox.prototype.getSelectedItems = function () {
   return Array.from(this.selectedList.querySelectorAll("optgroup")).map(
     (group) => ({
-      IDLevel1: group.id,
-      Level1Name: group.label,
+      idlevel1: group.id,
+      level1name: group.label,
       Level2: Array.from(group.querySelectorAll("option")).map((opt) => ({
-        IDLevel2: opt.value,
-        Level2Name: opt.textContent,
+        idlevel2: opt.value,
+        level2name: opt.textContent,
       })),
     })
   );
@@ -163,12 +139,12 @@ DualListBox.prototype.populateList = function (list, data) {
   list.innerHTML = "";
   data.forEach((level1) => {
     var optGroup = document.createElement("optgroup");
-    optGroup.label = level1.Level1Name;
-    optGroup.id = level1.IDLevel1;
+    optGroup.label = level1.level1name;
+    optGroup.id = level1.idlevel1;
     level1.Level2.forEach((level2) => {
       var option = document.createElement("option");
-      option.value = level2.IDLevel2;
-      option.textContent = level2.Level2Name;
+      option.value = level2.idlevel2;
+      option.textContent = level2.level2name;
       optGroup.appendChild(option);
     });
     list.appendChild(optGroup);
@@ -182,6 +158,53 @@ var listBoxSelectors = {
   btnRemove: "#btnRemove",
   btnSave: "#btnSave",
 };
+// Dados iniciais - podem vir de uma fonte externa
+var initialData = [
+  // {
 
-var dualListBox = new DualListBox(listBoxSelectors);
-dualListBox.render();
+  //   idlevel1: "338187",
+  //   level1name: "mark's space",
+  //   idlevel2: "506281",
+  //   level2name: "mark's space",
+
+  // },
+  // {
+  //   idlevel1: "5406",
+  //   level1name:
+  //     "How to Use GoBrunch for Webinars and Meetings: Live Tutorial with Q&A",
+  //   idlevel2: "8175",
+  //   level2name: "Using GoBrunch: Best Practices, Tips and Tricks",
+
+  // },
+  // {
+  //   idlevel1: "5406",
+  //   idlevel2: "817512",
+  //   level2name:
+  //     "Lorem ipsum dolor sit amet consectetur adipisicing elit. Ullam ea dolore tenetur rerum. Expedita, iure! Quod perspiciatis quisquam asperiores sed.",
+
+  // },
+];
+
+document.addEventListener('DOMContentLoaded', function () {
+  var dualListBox = new DualListBox(listBoxSelectors, initialData);
+  dualListBox.render();
+  // Atualizar dados em algum momento posterior
+  var newData = [
+    // novos dados aqui
+  ];
+  dualListBox.updateData(newData);
+
+});
+
+
+document.addEventListener('DOMContentLoaded', function () {
+  fetch('http://localhost:8080/data')
+    .then(response => response.json())
+    .then(data => {
+      var dualListBox = new DualListBox(listBoxSelectors, data);
+      dualListBox.render();
+    })
+    .catch(error => console.error('Error:', error));
+});
+
+
