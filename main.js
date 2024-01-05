@@ -1,3 +1,5 @@
+import { translateToDualListBoxFormat } from './datatranslator.js';
+
 function DualListBox(selectors, initialData) {
   this.availableList = document.querySelector(selectors.availableList);
   this.selectedList = document.querySelector(selectors.selectedList);
@@ -185,26 +187,75 @@ var initialData = [
   // },
 ];
 
-document.addEventListener('DOMContentLoaded', function () {
-  var dualListBox = new DualListBox(listBoxSelectors, initialData);
+
+
+// Supondo que someObject seja o objeto que você deseja traduzir
+// var someObject = {
+//   idlevel1: "123",
+//   level1name: "Grupo 1",
+//   idlevel2: "456",
+//   level2name: "Subgrupo 1"
+// };
+
+// var translatedObject = translateToDualListBoxFormat(someObject);
+
+// if (translatedObject) {
+//   // Colocando translatedObject em um array
+//   var dualListBox = new DualListBox(listBoxSelectors, [translatedObject]);
+//   dualListBox.render();
+//   console.log(translatedObject); // ou
+// }
+
+
+
+// Exemplo de uso
+const someObject = {
+  IdLevel1: "123",
+  NameLevel1: "Grupo 1",
+  IdLevel2: "456",
+  NameLevel2: "Subgrupo 1"
+};
+
+const keyMapping = {
+  idlevel1: "IdLevel1",
+  level1name: "NameLevel1",
+  idlevel2: "IdLevel2",
+  level2name: "NameLevel2"
+};
+
+const translatedObject = translateToDualListBoxFormat(someObject, keyMapping);
+if (translatedObject) {
+  // Colocando translatedObject em um array
+  var dualListBox = new DualListBox(listBoxSelectors, [translatedObject]);
   dualListBox.render();
-  // Atualizar dados em algum momento posterior
-  var newData = [
-    // novos dados aqui
-  ];
-  dualListBox.updateData(newData);
-
-});
+  console.log(translatedObject); // ou
+}
 
 
-document.addEventListener('DOMContentLoaded', function () {
-  fetch('http://localhost:8080/data')
-    .then(response => response.json())
-    .then(data => {
-      var dualListBox = new DualListBox(listBoxSelectors, data);
-      dualListBox.render();
-    })
-    .catch(error => console.error('Error:', error));
-});
+
+// document.addEventListener('DOMContentLoaded', function () {
+//   var dualListBox = new DualListBox(listBoxSelectors, initialData);
+//   dualListBox.render();
+//   // Atualizar dados em algum momento posterior
+//   var newData = [
+//     // novos dados aqui
+//   ];
+//   dualListBox.updateData(newData);
+
+// });
+
+
+// document.addEventListener('DOMContentLoaded', function () {
+//   fetch('http://localhost:8080/data')
+//     .then(response => response.json())
+//     .then(data => {
+//       var dualListBox = new DualListBox(listBoxSelectors, data);
+//       dualListBox.render();
+//       console.log(data); // para os dados da API
+
+//     })
+//     .catch(error => console.error('Error:', error));
+
+// });
 
 
