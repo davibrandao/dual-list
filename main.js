@@ -25,35 +25,58 @@ DualListBox.prototype.formatData = function (rawData) {
       groupedData[item.idlevel1] = {
         idlevel1: item.idlevel1,
         level1name: item.level1name,
-        Level2: [],
+        level2: [],  // Inicializa com 'level2' em minúsculas
       };
     }
-    groupedData[item.idlevel1].Level2.push({
-      idlevel2: item.idlevel2,
-      level2name: item.level2name,
+    // Adiciona itens tanto de 'Level2' (como no seu objeto de dados) quanto de 'level2'
+    var level2Items = item.Level2 || item.level2 || [];
+    level2Items.forEach(function (level2Item) {
+      if (level2Item.idlevel2 && level2Item.level2name) {
+        groupedData[item.idlevel1].level2.push({
+          idlevel2: level2Item.idlevel2,
+          level2name: level2Item.level2name,
+        });
+      }
     });
   });
 
   return Object.values(groupedData);
 };
 
+
 DualListBox.prototype.attachEventHandlers = function () {
-  this.btnAdd.onclick = () =>
+  this.btnAdd.onclick = () => {
     this.moveItems(this.availableList, this.selectedList);
-  this.btnRemove.onclick = () =>
+    this.moveOptGroups(this.availableList, this.selectedList);
+  };
+  this.btnRemove.onclick = () => {
     this.moveItems(this.selectedList, this.availableList);
-  this.availableList.addEventListener("dblclick", (event) => {
+    this.moveOptGroups(this.selectedList, this.availableList);
+  };
+
+  // Adiciona evento de clique (não duplo clique) para selecionar/desselecionar optgroups
+  this.availableList.addEventListener("click", (event) => {
     if (event.target.tagName === "OPTGROUP") {
-      this.moveOptGroup(this.availableList, this.selectedList, event.target.id);
+      event.target.classList.toggle('selected');
     }
   });
-  this.selectedList.addEventListener("dblclick", (event) => {
+
+  this.selectedList.addEventListener("click", (event) => {
     if (event.target.tagName === "OPTGROUP") {
-      this.moveOptGroup(this.selectedList, this.availableList, event.target.id);
+      event.target.classList.toggle('selected');
     }
   });
+
   this.btnSave.onclick = () => console.log(this.getSelectedItems());
 };
+
+// Função para mover optgroups selecionados
+DualListBox.prototype.moveOptGroups = function (source, destination) {
+  Array.from(source.querySelectorAll('optgroup.selected')).forEach(optGroup => {
+    this.moveOptGroup(source, destination, optGroup.id);
+  });
+};
+
 
 DualListBox.prototype.moveItems = function (source, destination) {
   // Movendo optgroups selecionados
@@ -139,19 +162,25 @@ DualListBox.prototype.render = function () {
 
 DualListBox.prototype.populateList = function (list, data) {
   list.innerHTML = "";
+
   data.forEach((level1) => {
     var optGroup = document.createElement("optgroup");
-    optGroup.label = level1.level1name;
-    optGroup.id = level1.idlevel1;
-    level1.Level2.forEach((level2) => {
+    optGroup.label = level1.level1name || "Nome não encontrado";
+    optGroup.id = level1.idlevel1 || "ID não encontrado";
+
+    level1.level2.forEach((level2) => {
       var option = document.createElement("option");
-      option.value = level2.idlevel2;
-      option.textContent = level2.level2name;
+      option.value = level2.idlevel2 || "ID não encontrado";
+      option.textContent = level2.level2name || "Nome não encontrado";
       optGroup.appendChild(option);
     });
+
     list.appendChild(optGroup);
   });
 };
+
+
+
 
 var listBoxSelectors = {
   availableList: "#availableEvents",
@@ -210,18 +239,35 @@ var initialData = [
 
 // Exemplo de uso
 const someObject = {
-  IdLevel1: "123",
-  NameLevel1: "Grupo 1",
-  IdLevel2: "456",
-  NameLevel2: "Subgrupo 1"
+  idLevel1: "214",
+  level1Name: "GoBrunch Events",
+  level2: [
+    {
+      idLevel2: "456",
+      level2Name: "Gobrunch Rooms 1"
+    },
+    {
+      idLevel2: "457",
+      level2Name: "Gobrunch Rooms 2"
+    },
+    {
+      idLevel2: "123",
+      level2Name: "Gobrunch Rooms 3"
+    }
+  ],
 };
 
+
 const keyMapping = {
-  idlevel1: "IdLevel1",
-  level1name: "NameLevel1",
-  idlevel2: "IdLevel2",
-  level2name: "NameLevel2"
+  idlevel1: "idLevel1",
+  level1name: "level1Name",
+  levels2: "level2",
+  idlevel2: "idLevel2",   // Mapeia para a chave de id no nível 2
+  level2name: "level2Name" // Mapeia para a chave de nome no nível 2
 };
+
+
+
 
 const translatedObject = translateToDualListBoxFormat(someObject, keyMapping);
 if (translatedObject) {

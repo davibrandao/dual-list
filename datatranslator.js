@@ -8,26 +8,38 @@ function normalizeKeys(obj) {
 
 // Função de tradução com mapeamento flexível de chaves
 export function translateToDualListBoxFormat(inputObject, keyMapping) {
-  // Normaliza as chaves do objeto de entrada
   const normalizedInput = normalizeKeys(inputObject);
 
-  // Verifica se idlevel1 e idlevel2 estão presentes
-  const idLevel1Key = keyMapping.idlevel1 ? keyMapping.idlevel1.toLowerCase() : null;
-  const idLevel2Key = keyMapping.idlevel2 ? keyMapping.idlevel2.toLowerCase() : null;
-  if (!idLevel1Key || !normalizedInput[idLevel1Key] || !idLevel2Key || !normalizedInput[idLevel2Key]) {
-    console.error("idlevel1 ou idlevel2 obrigatório não encontrado no objeto.");
+  const idLevel1Key = keyMapping.idlevel1 && normalizedInput[keyMapping.idlevel1.toLowerCase()];
+  const level1NameKey = keyMapping.level1name && normalizedInput[keyMapping.level1name.toLowerCase()];
+  if (!idLevel1Key || !level1NameKey) {
+    console.error("idlevel1 ou level1name obrigatório não encontrado no objeto.");
     return null;
   }
 
-  // Constrói um novo objeto com base no mapeamento fornecido
-  const translatedObject = {};
-  Object.keys(keyMapping).forEach(standardKey => {
-    const inputKey = keyMapping[standardKey].toLowerCase();
-    translatedObject[standardKey] = normalizedInput[inputKey];
-  });
+  const translatedObject = {
+    idlevel1: idLevel1Key,
+    level1name: level1NameKey,
+    Level2: []
+  };
+
+  // Ajuste aqui: Assegurando que o mapeamento para os níveis 2 está correto
+  const levels2Data = normalizedInput[keyMapping.levels2.toLowerCase()];
+  if (levels2Data && Array.isArray(levels2Data)) {
+    levels2Data.forEach(level2Item => {
+      const normalizedLevel2 = normalizeKeys(level2Item);
+      if (normalizedLevel2['idlevel2'] && normalizedLevel2['level2name']) {
+        translatedObject.Level2.push({
+          idlevel2: normalizedLevel2['idlevel2'],
+          level2name: normalizedLevel2['level2name']
+        });
+      }
+    });
+  } else {
+    console.error("Levels2 não encontrado ou não é um array.");
+  }
+
 
   return translatedObject;
 }
-
-
 
