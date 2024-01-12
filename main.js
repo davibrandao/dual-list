@@ -1,4 +1,4 @@
-import { translateToDualListBoxFormat } from './datatranslator.js';
+import { translateToDualListBoxFormat, estruturarEvento, estruturarMeeting, unificarDados } from './datatranslator.js';
 
 function DualListBox(selectors, initialData) {
   this.availableList = document.querySelector(selectors.availableList);
@@ -7,7 +7,6 @@ function DualListBox(selectors, initialData) {
   this.btnRemove = document.querySelector(selectors.btnRemove);
   this.btnSave = document.querySelector(selectors.btnSave);
 
-  // Ajuste: Inicializa com dados passados como parâmetro
   this.data = this.formatData(initialData || []);
   this.attachEventHandlers();
 }
@@ -99,11 +98,22 @@ DualListBox.prototype.moveOptGroup = function (source, destination, optGroupId) 
   var optGroup = source.querySelector('optgroup[id="' + optGroupId + '"]');
   if (optGroup) {
     var existingOptGroup = destination.querySelector('optgroup[id="' + optGroupId + '"]');
+
     if (existingOptGroup) {
-      existingOptGroup.remove();
+      // Em vez de remover o grupo existente, adicione
+      Array.from(optGroup.children).forEach(option => {
+        // Verifica se o item já existe no grupo de destino
+        if (!existingOptGroup.querySelector('option[value="' + option.value + '"]')) {
+          var clonedOption = option.cloneNode(true);
+          existingOptGroup.appendChild(clonedOption);
+        }
+      });
+    } else {
+      // Se não houver um grupo existente, simplesmente move o grupo inteiro
+      var clonedOptGroup = optGroup.cloneNode(true);
+      destination.appendChild(clonedOptGroup);
     }
-    var clonedOptGroup = optGroup.cloneNode(true);
-    destination.appendChild(clonedOptGroup);
+
     optGroup.remove();
   }
 };
@@ -181,7 +191,6 @@ DualListBox.prototype.populateList = function (list, data) {
 
 
 
-
 var listBoxSelectors = {
   availableList: "#availableEvents",
   selectedList: "#selectedEvents",
@@ -238,32 +247,53 @@ var initialData = [
 
 
 // Exemplo de uso
-const someObject = {
-  idLevel1: "214",
-  level1Name: "GoBrunch Events",
-  level2: [
-    {
-      idLevel2: "456",
-      level2Name: "Gobrunch Rooms 1"
-    },
-    {
-      idLevel2: "457",
-      level2Name: "Gobrunch Rooms 2"
-    },
-    {
-      idLevel2: "123",
-      level2Name: "Gobrunch Rooms 3"
-    }
-  ],
-};
+const someObject = [
+  {
+    idLevel1: "214",
+    level1Name: "GoBrunch Events",
+    level2: [
+      {
+        idLevel2: "456",
+        level2Name: "Gobrunch Rooms 1"
+      },
+      {
+        idLevel2: "457",
+        level2Name: "Gobrunch Rooms 2"
+      },
+      {
+        idLevel2: "123",
+        level2Name: "Gobrunch Rooms 3"
+      }
+    ],
+  },
+  {
+    idLevel1: "2124",
+    level1Name: "GoBrunch Events 2",
+    level2: [
+      {
+        idLevel2: "4526",
+        level2Name: "Gobrunch Rooms 4"
+      },
+      {
+        idLevel2: "4257",
+        level2Name: "Gobrunch Rooms 5"
+      },
+      {
+        idLevel2: "1223",
+        level2Name: "Gobrunch Rooms 6"
+      }
+    ],
+  },
 
+  // Mais objetos de nível 1 podem ser adicionados aqui
+];
 
 const keyMapping = {
   idlevel1: "idLevel1",
   level1name: "level1Name",
   levels2: "level2",
-  idlevel2: "idLevel2",   // Mapeia para a chave de id no nível 2
-  level2name: "level2Name" // Mapeia para a chave de nome no nível 2
+  idlevel2: "idLevel2",
+  level2name: "level2Name"
 };
 
 
@@ -272,7 +302,7 @@ const keyMapping = {
 const translatedObject = translateToDualListBoxFormat(someObject, keyMapping);
 if (translatedObject) {
   // Colocando translatedObject em um array
-  var dualListBox = new DualListBox(listBoxSelectors, [translatedObject]);
+  var dualListBox = new DualListBox(listBoxSelectors, translatedObject);
   dualListBox.render();
   console.log(translatedObject); // ou
 }
@@ -305,3 +335,34 @@ if (translatedObject) {
 // });
 
 
+var dadosEvento = [
+  "338187\tmark's space\t506281\tmark's space",
+  "5406\tHow to Use GoBrunch for Webinars and Meetings: Live Tutorial with Q&A\t8175\tUsing GoBrunch: Best Practices, Tips and Tricks",
+  "30778\tOfficial GoBrunch Tutorial for Creating Live Webinars and Record\t39152\tHow to create Live Webinars and Record"
+];
+
+
+var dadosMeeting = [
+  "332523\t497448\t2023-11-03 15:49:05\t1",
+  "332051\t496781\t2023-10-29 19:33:49\t1",
+  "animecitymodsroomlink\t496543\t2023-10-27 23:03:00\t0"
+];
+var nomePadrao = "brunch"; // Nome padrão para substituir o hash
+
+
+// Estruturar os dados de evento
+var estruturadosEvento = estruturarEvento(dadosEvento);
+
+// Estruturar os dados de meeting
+var estruturadosMeeting = estruturarMeeting(dadosMeeting, nomePadrao);
+
+// Unificar os dados
+var dadosUnificados = unificarDados(estruturadosEvento, estruturadosMeeting);
+
+// Colocando translatedObject em um array
+var dualListBox = new DualListBox(listBoxSelectors, dadosUnificados);
+dualListBox.render();
+
+
+// Exibir os dados unificados no console para verificação
+console.log(dadosUnificados);
