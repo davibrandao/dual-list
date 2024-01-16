@@ -17,30 +17,25 @@ DualListBox.prototype.updateData = function (newData) {
 };
 
 DualListBox.prototype.formatData = function (rawData) {
-  var groupedData = {};
+  return rawData.map(item => {
+    // Cria uma cópia superficial do item para não alterar o objeto original
+    var formattedItem = Object.assign({}, item);
 
-  rawData.forEach(function (item) {
-    if (!groupedData[item.idlevel1]) {
-      groupedData[item.idlevel1] = {
-        idlevel1: item.idlevel1,
-        level1name: item.level1name,
-        level2: [],  // Inicializa com 'level2' em minúsculas
-      };
+    // Se 'level2' não estiver no formato array, converte para array
+    if (!Array.isArray(formattedItem.level2)) {
+      formattedItem.level2 = formattedItem.Level2 || formattedItem.level2 || [];
+      formattedItem.level2 = formattedItem.level2.map(level2Item => {
+        return {
+          idlevel2: level2Item.idlevel2 || '',
+          level2name: level2Item.level2name || 'Nome não encontrado'
+        };
+      });
     }
-    // Adiciona itens tanto de 'Level2' (como no seu objeto de dados) quanto de 'level2'
-    var level2Items = item.Level2 || item.level2 || [];
-    level2Items.forEach(function (level2Item) {
-      if (level2Item.idlevel2 && level2Item.level2name) {
-        groupedData[item.idlevel1].level2.push({
-          idlevel2: level2Item.idlevel2,
-          level2name: level2Item.level2name,
-        });
-      }
-    });
-  });
 
-  return Object.values(groupedData);
+    return formattedItem;
+  });
 };
+
 
 
 DualListBox.prototype.attachEventHandlers = function () {
@@ -168,6 +163,7 @@ DualListBox.prototype.getSelectedItems = function () {
 
 DualListBox.prototype.render = function () {
   this.populateList(this.availableList, this.data);
+  console.log(this.data)
 };
 
 DualListBox.prototype.populateList = function (list, data) {
@@ -188,6 +184,8 @@ DualListBox.prototype.populateList = function (list, data) {
     list.appendChild(optGroup);
   });
 };
+
+
 
 
 
@@ -247,65 +245,65 @@ var initialData = [
 
 
 // Exemplo de uso
-const someObject = [
-  {
-    idLevel1: "214",
-    level1Name: "GoBrunch Events",
-    level2: [
-      {
-        idLevel2: "456",
-        level2Name: "Gobrunch Rooms 1"
-      },
-      {
-        idLevel2: "457",
-        level2Name: "Gobrunch Rooms 2"
-      },
-      {
-        idLevel2: "123",
-        level2Name: "Gobrunch Rooms 3"
-      }
-    ],
-  },
-  {
-    idLevel1: "2124",
-    level1Name: "GoBrunch Events 2",
-    level2: [
-      {
-        idLevel2: "4526",
-        level2Name: "Gobrunch Rooms 4"
-      },
-      {
-        idLevel2: "4257",
-        level2Name: "Gobrunch Rooms 5"
-      },
-      {
-        idLevel2: "1223",
-        level2Name: "Gobrunch Rooms 6"
-      }
-    ],
-  },
+// const someObject = [
+//   {
+//     idLevel1: "214",
+//     level1Name: "GoBrunch Events",
+//     level2: [
+//       {
+//         idLevel2: "456",
+//         level2Name: "Gobrunch Rooms 1"
+//       },
+//       {
+//         idLevel2: "457",
+//         level2Name: "Gobrunch Rooms 2"
+//       },
+//       {
+//         idLevel2: "123",
+//         level2Name: "Gobrunch Rooms 3"
+//       }
+//     ],
+//   },
+//   {
+//     idLevel1: "2124",
+//     level1Name: "GoBrunch Events 2",
+//     level2: [
+//       {
+//         idLevel2: "4526",
+//         level2Name: "Gobrunch Rooms 4"
+//       },
+//       {
+//         idLevel2: "4257",
+//         level2Name: "Gobrunch Rooms 5"
+//       },
+//       {
+//         idLevel2: "1223",
+//         level2Name: "Gobrunch Rooms 6"
+//       }
+//     ],
+//   },
 
-  // Mais objetos de nível 1 podem ser adicionados aqui
-];
+//   // Mais objetos de nível 1 podem ser adicionados aqui
+// ];
 
-const keyMapping = {
-  idlevel1: "idLevel1",
-  level1name: "level1Name",
-  levels2: "level2",
-  idlevel2: "idLevel2",
-  level2name: "level2Name"
-};
-
-
+// const keyMapping = {
+//   idlevel1: "idLevel1",
+//   level1name: "level1Name",
+//   levels2: "level2",
+//   idlevel2: "idLevel2",
+//   level2name: "level2Name"
+// };
 
 
-const translatedObject = translateToDualListBoxFormat(someObject, keyMapping);
-if (translatedObject) {
-  // Colocando translatedObject em um array
-  var dualListBox = new DualListBox(listBoxSelectors, translatedObject);
-  dualListBox.render();
-  console.log(translatedObject); // ou
-}
+
+
+// const translatedObject = translateToDualListBoxFormat(someObject, keyMapping);
+// if (translatedObject) {
+//   // Colocando translatedObject em um array
+//   var dualListBox = new DualListBox(listBoxSelectors, translatedObject);
+//   dualListBox.render();
+//   console.log(translatedObject); // ou
+// }
 
 
 
@@ -335,34 +333,39 @@ if (translatedObject) {
 // });
 
 
+// Dados de Evento
 var dadosEvento = [
-  "338187\tmark's space\t506281\tmark's space",
-  "5406\tHow to Use GoBrunch for Webinars and Meetings: Live Tutorial with Q&A\t8175\tUsing GoBrunch: Best Practices, Tips and Tricks",
-  "30778\tOfficial GoBrunch Tutorial for Creating Live Webinars and Record\t39152\tHow to create Live Webinars and Record"
+  { ColumnA: "338187", ColumnB: "mark's space", ColumnC: "506281", ColumnD: "mark's space" },
+  { ColumnA: "5406", ColumnB: "How to Use GoBrunch for Webinars and Meetings", ColumnC: "8175", ColumnD: "Using GoBrunch: Best Practices" },
+  // ... outros eventos
 ];
 
-
+// Dados de Meeting
 var dadosMeeting = [
-  "332523\t497448\t2023-11-03 15:49:05\t1",
-  "332051\t496781\t2023-10-29 19:33:49\t1",
-  "animecitymodsroomlink\t496543\t2023-10-27 23:03:00\t0"
+  { ColumnA: "332523", ColumnB: "497448", ColumnC: "1" },
+  { ColumnA: "animecitymods", ColumnB: "496781", ColumnC: "0" },
+  // ... outros meetings
 ];
-var nomePadrao = "brunch"; // Nome padrão para substituir o hash
 
+const eventoKeyMapping = {
+  idLevel1: "ColumnA",
+  level1Name: "ColumnB",
+  idLevel2: "ColumnC",
+  level2Name: "ColumnD"
+};
+const meetingKeyMapping = {
+  linkname: "ColumnA",
+  idsession: "ColumnA",
+  hasMeetingURL: "ColumnC",
+};
 
-// Estruturar os dados de evento
-var estruturadosEvento = estruturarEvento(dadosEvento);
-
-// Estruturar os dados de meeting
-var estruturadosMeeting = estruturarMeeting(dadosMeeting, nomePadrao);
-
-// Unificar os dados
-var dadosUnificados = unificarDados(estruturadosEvento, estruturadosMeeting);
-
-// Colocando translatedObject em um array
-var dualListBox = new DualListBox(listBoxSelectors, dadosUnificados);
-dualListBox.render();
-
-
-// Exibir os dados unificados no console para verificação
-console.log(dadosUnificados);
+var meeting = estruturarMeeting(dadosMeeting, meetingKeyMapping, 'brunch');
+var evento = estruturarEvento(dadosEvento, eventoKeyMapping);
+var dadosUnificados = unificarDados(evento, meeting)
+if (dadosUnificados) {
+  var dualListBox = new DualListBox(listBoxSelectors, dadosUnificados);
+  dualListBox.render();
+  console.log(dadosUnificados)
+}
+console.log(evento);
+console.log(meeting)

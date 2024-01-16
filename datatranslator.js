@@ -43,57 +43,67 @@ export function translateToDualListBoxFormat(inputArray, keyMapping) {
   }).filter(item => item != null); // Filtra os objetos nulos
 }
 
-export function estruturarEvento(dados) {
-  var resultado = {};
-  dados.forEach(linha => {
-    var [idLevel1, level1Name, idLevel2, level2Name] = linha.split('\t');
+// export function estruturarDados(dadosEvento, dadosMeeting, eventoKeyMapping, meetingKeyMapping, nomePadrao) {
+//   var resultado = {};
 
-    if (!resultado[idLevel1]) {
-      resultado[idLevel1] = { idlevel1: idLevel1, level1name: level1Name, level2: [] };
-    }
-    resultado[idLevel1].level2.push({ idlevel2: idLevel2, level2name: level2Name });
+//   // Processar dados de Evento
+//   dadosEvento.forEach(item => {
+//     var idLevel1 = item[eventoKeyMapping.idLevel1];
+//     var level1Name = item[eventoKeyMapping.level1Name];
+//     var idLevel2 = item[eventoKeyMapping.idLevel2];
+//     var level2Name = item[eventoKeyMapping.level2Name];
+
+//     if (!resultado[idLevel1]) {
+//       resultado[idLevel1] = { idlevel1: idLevel1, level1name: level1Name, level2: [] };
+//     }
+//     resultado[idLevel1].level2.push({ idlevel2: idLevel2, level2name: level2Name });
+//   });
+
+//   // Processar dados de Meeting
+//   dadosMeeting.forEach(item => {
+//     var idLevel1 = item[meetingKeyMapping.linkname];
+//     var level1Name = item[meetingKeyMapping.hasMeetingURL] === '1' ? nomePadrao : idLevel1;
+//     var idLevel2 = item[meetingKeyMapping.idsession];
+//     var level2Name = nomePadrao;
+
+//     if (!resultado[idLevel1]) {
+//       resultado[idLevel1] = { idlevel1: idLevel1, level1name: level1Name, level2: [] };
+//     }
+//     resultado[idLevel1].level2.push({ idlevel2: idLevel2, level2name: level2Name });
+//   });
+
+//   return Object.values(resultado);
+// }
+
+
+export function estruturarEvento(dados, keyMapping) {
+  return dados.map(item => {
+    return {
+      idlevel1: item[keyMapping.idLevel1],
+      level1name: item[keyMapping.level1Name],
+      level2: [{
+        idlevel2: item[keyMapping.idLevel2],
+        level2name: item[keyMapping.level2Name]
+      }]
+    };
   });
-
-  return Object.values(resultado);
 }
 
 
-export function estruturarMeeting(dados, nomePadrao) {
-  var resultado = {};
-  dados.forEach(linha => {
-    var [linkname, idsession, , hasMeetingURL] = linha.split('\t');
-
-    var nomeUsado = hasMeetingURL === '1' ? nomePadrao : linkname;
-
-    if (!resultado[idsession]) {
-      resultado[idsession] = { idlevel1: linkname, level1name: nomeUsado, level2: [] };
-    }
-
-    // Exemplo: adicionando um item de nível 2 com ID e nome específicos
-    resultado[idsession].level2.push({ idlevel2: idsession, level2name: "Meeting Room" });
+export function estruturarMeeting(dados, keyMapping, nomePadrao) {
+  return dados.map(item => {
+    return {
+      idlevel1: item[keyMapping.linkname],
+      level1name: item[keyMapping.hasMeetingURL] === '1' ? nomePadrao : item[keyMapping.linkname],
+      level2: [{
+        idlevel2: item[keyMapping.idsession],
+        level2name: nomePadrao
+      }]
+    };
   });
-
-  return Object.values(resultado);
 }
 
 export function unificarDados(dadosEvento, dadosMeeting) {
-  var unificados = {};
-
-  // Processa os dados de eventos
-  dadosEvento.forEach(item => {
-    unificados[item.idlevel1] = item;
-  });
-
-  // Processa os dados de meetings, combinando com eventos se necessário
-  dadosMeeting.forEach(item => {
-    if (unificados[item.idlevel1]) {
-      // Combina os níveis 2 se o nível 1 já existir
-      unificados[item.idlevel1].level2 = [...unificados[item.idlevel1].level2, ...item.level2];
-    } else {
-      unificados[item.idlevel1] = item;
-    }
-  });
-
-  return Object.values(unificados);
+  return [...dadosEvento, ...dadosMeeting];
 }
 
