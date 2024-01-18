@@ -1,4 +1,4 @@
-import { translateToDualListBoxFormat, estruturarEvento, estruturarMeeting, unificarDados } from './datatranslator.js';
+import { translateToDualListBoxFormat, estruturarEvento, estruturarMeeting, unificarDados, estruturarDados, transformarDadosComBaseNoSchema, validateSchema, transformAndCompareWithSchema, buildObjectFromSchema, createEmptyObjectFromSchema, fillObjectWithData, populateObjectsFromData } from './datatranslator.js';
 
 function DualListBox(selectors, initialData) {
   this.availableList = document.querySelector(selectors.availableList);
@@ -10,6 +10,8 @@ function DualListBox(selectors, initialData) {
   this.data = this.formatData(initialData || []);
   this.attachEventHandlers();
 }
+
+
 
 DualListBox.prototype.updateData = function (newData) {
   this.data = this.formatData(newData);
@@ -35,8 +37,6 @@ DualListBox.prototype.formatData = function (rawData) {
     return formattedItem;
   });
 };
-
-
 
 DualListBox.prototype.attachEventHandlers = function () {
   this.btnAdd.onclick = () => {
@@ -335,10 +335,8 @@ var initialData = [
 
 // Dados de Evento
 var dadosEvento = [
-  { ColumnA: "338187", ColumnB: "mark's space", ColumnC: "506281", ColumnD: "mark's space" },
-  { ColumnA: "5406", ColumnB: "How to Use GoBrunch for Webinars and Meetings", ColumnC: "8175", ColumnD: "Using GoBrunch: Best Practices" },
-  // ... outros eventos
-];
+
+]
 
 // Dados de Meeting
 var dadosMeeting = [
@@ -363,9 +361,188 @@ var meeting = estruturarMeeting(dadosMeeting, meetingKeyMapping, 'brunch');
 var evento = estruturarEvento(dadosEvento, eventoKeyMapping);
 var dadosUnificados = unificarDados(evento, meeting)
 if (dadosUnificados) {
-  var dualListBox = new DualListBox(listBoxSelectors, dadosUnificados);
-  dualListBox.render();
+  // var dualListBox = new DualListBox(listBoxSelectors, dadosUnificados);
+  // dualListBox.render();
   console.log(dadosUnificados)
 }
-console.log(evento);
-console.log(meeting)
+
+const dadosDeEntrada = [
+  [
+    [{ idevent: 338187, eventname: 'marks space', idsession: 506281, linkname: 'marks space', datesessionstart: '2023-12-23 14:51:00', HasMeetingURL: 0, currentevent: 0 }],
+    [{ idevent: 338187, eventname: 'marks space', idsession: 506282, linkname: 'marks brunch', datesessionstart: '2023-12-23 14:22:20', HasMeetingURL: 0, currentevent: 0 }],
+    [{ idevent: 338188, eventname: 'how to use gobrunch', idsession: 506283, linkname: 'gobrunch room', datesessionstart: '2023-12-23 12:22:22', HasMeetingURL: 0, currentevent: 0 }]
+  ]
+];
+
+
+
+
+// const transformedObj = transformArrayToObj(dadosDeEntrada);
+// console.log(transformedObj);
+
+// const keyMapping = {
+//   idLevel1: 'id',
+//   level1Name: 'name',
+//   idLevel2: 'id',
+//   level2Name: 'name',
+// };
+
+// const dadosEstruturados = estruturarDados(dadosDeEntrada, keyMapping);
+// console.log(dadosEstruturados);
+
+// if (dadosEstruturados) {
+//   var dualListBox = new DualListBox(listBoxSelectors, dadosEstruturados);
+//   dualListBox.render();
+//   // console.log(dadosUnificados)
+// }
+
+
+const jsonSchema = {
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "idevent": {
+      "type": "number"
+    },
+    "eventname": {
+      "type": "string"
+    },
+    "level2": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "idsession": {
+            "type": "number"
+          },
+          "linkname": {
+            "type": "string"
+          },
+          "datesessionstart": {
+            "type": "string",
+          },
+          "HasMeetingURL": {
+            "type": "number"
+          },
+          "currentevent": {
+            "type": "number"
+          }
+        },
+        "required": ["idsession", "linkname", "datesessionstart", "HasMeetingURL", "currentevent"]
+      }
+    }
+  },
+  "required": ["idevent", "eventname", "level2"]
+};
+// const jsonSchema2 = {
+//   "$schema": "http://json-schema.org/draft-07/schema#",
+//   "type": "object",
+//   "properties": {
+//     "idevent": {
+//       "type": "number"
+//     },
+//     "eventname": {
+//       "type": "string"
+//     },
+//     "level2": {
+//       "type": "array",
+//       "items": {
+//         "type": "object",
+//         "properties": {
+//           "idsession": {
+//             "type": "number"
+//           },
+//           "linkname": {
+//             "type": "string"
+//           },
+//           "datesessionstart": {
+//             "type": "string",
+//           },
+//           "HasMeetingURL": {
+//             "type": "number"
+//           },
+//           "currentevent": {
+//             "type": "number"
+//           }
+//         },
+//         "required": ["idsession", "linkname", "datesessionstart", "HasMeetingURL", "currentevent"]
+//       }
+//     },
+//     "level3": {
+//       "type": "array",
+//       "items": {
+//         "type": "object",
+//         "properties": {
+//           "idsession": {
+//             "type": "number"
+//           },
+//           "linkname": {
+//             "type": "string"
+//           },
+//           "datesessionstart": {
+//             "type": "string",
+//           },
+//           "HasMeetingURL": {
+//             "type": "number"
+//           },
+//           "currentevent": {
+//             "type": "number"
+//           },
+//           "levels": {
+//             "type": "array",
+//             "items": {
+//               "type": "object",
+//               "properties": {
+//                 "idsession": {
+//                   "type": "number"
+//                 },
+//                 "linkname": {
+//                   "type": "string"
+//                 },
+//                 "datesessionstart": {
+//                   "type": "string",
+//                 },
+//                 "HasMeetingURL": {
+//                   "type": "number"
+//                 },
+//                 "currentevent": {
+//                   "type": "number"
+//                 }
+//               },
+//               "required": ["idsession", "linkname", "datesessionstart", "HasMeetingURL", "currentevent"]
+//             }
+//           }
+//         },
+//         "required": ["idsession", "linkname", "datesessionstart", "HasMeetingURL", "currentevent"]
+//       }
+//     }
+//   },
+//   "required": ["idevent", "eventname", "level2"]
+// };
+
+// const dadosTransformados = transformarDadosComBaseNoSchema(dadosDeEntrada, jsonSchema);
+// console.log(dadosTransformados);
+// console.log(jsonSchema)
+
+
+
+
+const isValidSchema = validateSchema(jsonSchema);
+console.log('O schema é válido:', isValidSchema);
+
+const isValid = transformAndCompareWithSchema(dadosDeEntrada, jsonSchema);
+console.log('A estrutura do array corresponde ao schema:', isValid);
+
+const builtObject = buildObjectFromSchema(dadosDeEntrada, jsonSchema);
+console.log(builtObject);
+
+const emptyObject = createEmptyObjectFromSchema(jsonSchema);
+console.log(emptyObject);
+
+const filledObject = fillObjectWithData(emptyObject, dadosDeEntrada, jsonSchema);
+console.log(filledObject);
+
+const groupingProperties = ['idevent', 'eventname'];
+
+const result = populateObjectsFromData(dadosDeEntrada, jsonSchema, groupingProperties);
+console.log(result);
