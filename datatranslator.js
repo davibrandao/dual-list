@@ -43,192 +43,45 @@ export function translateToDualListBoxFormat(inputArray, keyMapping) {
   }).filter(item => item != null); // Filtra os objetos nulos
 }
 
-// export function estruturarDados(dadosEvento, dadosMeeting, eventoKeyMapping, meetingKeyMapping, nomePadrao) {
-//   var resultado = {};
-
-//   // Processar dados de Evento
-//   dadosEvento.forEach(item => {
-//     var idLevel1 = item[eventoKeyMapping.idLevel1];
-//     var level1Name = item[eventoKeyMapping.level1Name];
-//     var idLevel2 = item[eventoKeyMapping.idLevel2];
-//     var level2Name = item[eventoKeyMapping.level2Name];
-
-//     if (!resultado[idLevel1]) {
-//       resultado[idLevel1] = { idlevel1: idLevel1, level1name: level1Name, level2: [] };
-//     }
-//     resultado[idLevel1].level2.push({ idlevel2: idLevel2, level2name: level2Name });
-//   });
-
-//   // Processar dados de Meeting
-//   dadosMeeting.forEach(item => {
-//     var idLevel1 = item[meetingKeyMapping.linkname];
-//     var level1Name = item[meetingKeyMapping.hasMeetingURL] === '1' ? nomePadrao : idLevel1;
-//     var idLevel2 = item[meetingKeyMapping.idsession];
-//     var level2Name = nomePadrao;
-
-//     if (!resultado[idLevel1]) {
-//       resultado[idLevel1] = { idlevel1: idLevel1, level1name: level1Name, level2: [] };
-//     }
-//     resultado[idLevel1].level2.push({ idlevel2: idLevel2, level2name: level2Name });
-//   });
-
-//   return Object.values(resultado);
-// }
 
 
-export function estruturarEvento(dados, keyMapping) {
-  const resultado = {};
-
-  dados.forEach(item => {
-    const idLevel1 = item[keyMapping.idLevel1];
-    const level1Name = item[keyMapping.level1Name];
-
-    if (!resultado[idLevel1]) {
-      resultado[idLevel1] = {
-        idlevel1: idLevel1,
-        level1name: level1Name,
-        level2: []
-      };
-    }
-
-    // Verifica se 'level2' é um array e processa cada item
-    if (Array.isArray(item.level2)) {
-      item.level2.forEach(subItem => {
-        resultado[idLevel1].level2.push({
-          idlevel2: subItem[keyMapping.idLevel2],
-          level2name: subItem[keyMapping.level2Name]
-        });
-      });
-    } else {
-      // Processa um único item de nível 2
-      const idLevel2 = item[keyMapping.idLevel2];
-      const level2Name = item[keyMapping.level2Name];
-      resultado[idLevel1].level2.push({
-        idlevel2: idLevel2,
-        level2name: level2Name
-      });
-    }
-  });
-
-  return Object.values(resultado);
-}
-
-
-
-export function estruturarMeeting(dados, keyMapping, nomePadrao) {
-  return dados.map(item => {
-    return {
-      idlevel1: item[keyMapping.linkname],
-      level1name: item[keyMapping.hasMeetingURL] === '1' ? nomePadrao : item[keyMapping.linkname],
-      level2: [{
-        idlevel2: item[keyMapping.idsession],
-        level2name: nomePadrao
-      }]
-    };
-  });
-}
-
-export function unificarDados(dadosEvento, dadosMeeting) {
-  return [...dadosEvento, ...dadosMeeting];
-}
-
-export function estruturarDados(dados, keyMapping) {
-  const resultado = [];
-
-  dados.forEach(grupo => {
-    if (grupo.length >= 2) {
-      const dadosNivel1 = grupo[0][0]; // Primeiro objeto da primeira linha
-      const dadosNivel2 = grupo[1][0]; // Primeiro objeto da segunda linha
-
-      const itemNivel1 = {
-        idlevel1: dadosNivel1[keyMapping.idLevel1],
-        level1name: dadosNivel1[keyMapping.level1Name],
-        level2: [{
-          idlevel2: dadosNivel2[keyMapping.idLevel2],
-          level2name: dadosNivel2[keyMapping.level2Name]
-        }]
-      };
-
-      // Adicionando informações adicionais, se necessário
-      for (const extraKey in keyMapping.extraNivel1) {
-        itemNivel1[extraKey] = dadosNivel1[keyMapping.extraNivel1[extraKey]];
-      }
-
-      for (const extraKey in keyMapping.extraNivel2) {
-        itemNivel1.level2[0][extraKey] = dadosNivel2[keyMapping.extraNivel2[extraKey]];
-      }
-
-      resultado.push(itemNivel1);
-    }
-  });
-
-  return resultado;
-}
-
-export function transformarDadosComBaseNoSchema(inputArray, jsonSchema) {
-  // Verifica se o schema e a entrada são válidos
-  if (!Array.isArray(inputArray) || typeof jsonSchema !== 'object') {
-    throw new Error('Invalid input or schema');
-  }
-
-  // Função auxiliar para transformar cada item com base no schema
-  function transformItem(item, schema) {
-    const result = {};
-
-    // Itera sobre as propriedades do schema
-    for (const key in schema.properties) {
-      const prop = schema.properties[key];
-      if (prop.type === 'array' && Array.isArray(item[key])) {
-        // Processa recursivamente para arrays
-        result[key] = item[key].map(subItem => transformItem(subItem, prop.items));
-      } else if (typeof item[key] !== 'undefined') {
-        // Copia o valor conforme está no item
-        result[key] = item[key];
-      }
-    }
-
-    return result;
-  }
-
-  // Transforma cada item do array de entrada
-  const transformedData = inputArray.map(subArray =>
-    subArray.map(item => transformItem(item, jsonSchema))
-  );
-
-  return transformedData;
-}
-
-
+/**
+ * Valida um esquema JSON contra um conjunto de regras.
+ * Verifica se o esquema é um objeto válido, se cada propriedade tem um tipo definido,
+ * e se as propriedades do tipo 'object' ou 'array' também possuem esquemas válidos.
+ *
+ * @param {object} schema - O esquema JSON a ser validado.
+ * @returns {boolean} Retorna true se o esquema é válido, false caso contrário.
+ */
 export function validateSchema(schema) {
   if (typeof schema !== 'object' || schema === null) {
+    console.error("Esquema fornecido não é um objeto válido.");
     return false;
   }
 
   if (schema.type !== 'object' || typeof schema.properties !== 'object') {
+    console.error("Esquema de objeto esperado com propriedades definidas.");
     return false;
   }
 
   for (const key in schema.properties) {
     const property = schema.properties[key];
+
     if (typeof property !== 'object' || typeof property.type !== 'string') {
+      console.error(`Propriedade '${key}' no esquema não é definida corretamente.`);
       return false;
     }
 
-    if (property.type === 'object' && property.properties) {
-      if (!validateSchema(property)) {
-        return false;
-      }
-    }
-
-    if (property.type === 'array') {
-      if (!property.items || typeof property.items !== 'object' || !validateSchema(property.items)) {
-        return false;
-      }
+    // Validação recursiva para propriedades do tipo 'object' e 'array'
+    if ((property.type === 'object' && property.properties && !validateSchema(property)) ||
+      (property.type === 'array' && (!property.items || typeof property.items !== 'object' || !validateSchema(property.items)))) {
+      return false;
     }
   }
 
   return true;
 }
+
 
 export function transformAndCompareWithSchema(array, schema) {
   function transformObject(obj, schemaProperties) {
@@ -332,10 +185,6 @@ export function buildObjectFromSchema(array, schema) {
   return finalResult;
 }
 
-
-
-
-
 export function createEmptyObjectFromSchema(schema) {
   function createObject(schemaProperties) {
     const resultObj = {};
@@ -430,119 +279,78 @@ function processItem(item, schemaProperties, level) {
 }
 
 
+/**
+ * Processa dados de entrada com base em um esquema JSON e propriedades de agrupamento.
+ * Agrupa dados com base nas propriedades especificadas e processa cada nível de aninhamento.
+ *
+ * @param {array} inputData - Dados de entrada a serem processados.
+ * @param {object} jsonSchema - O esquema JSON usado para o processamento dos dados.
+ * @param {array} groupingProperties - Propriedades usadas para agrupar os dados.
+ */
 export function populateObjectsFromData(inputData, jsonSchema, groupingProperties) {
-  if (!Array.isArray(inputData) || typeof jsonSchema !== 'object' || !Array.isArray(groupingProperties)) {
-    console.error('Dados de entrada, schema JSON ou propriedades de agrupamento inválidos');
-    return;
-  }
-
-  function groupDataByProperties(data, properties) {
-    const groupedData = {};
-    data.forEach(item => {
-      const key = properties.map(prop => item[prop]).join('_');
-      if (!groupedData[key]) {
-        groupedData[key] = [];
-      }
-      groupedData[key].push(item);
-    });
-    return groupedData;
-  }
-
-
-  // Processa cada nível de aninhamento
-  function processLevel(data, schema, level) {
-    if (!Array.isArray(data)) {
-      console.error('Dados esperados como array no nível', level);
-      return [];
+  try {
+    if (!Array.isArray(inputData) || typeof jsonSchema !== 'object' || !Array.isArray(groupingProperties)) {
+      throw new Error('Dados de entrada, esquema JSON ou propriedades de agrupamento inválidos.');
     }
 
-    return data.map(item => {
-      let processedItem = {};
-      for (let key in schema.properties) {
-        const propSchema = schema.properties[key];
-        if (propSchema.type === "array") {
-          // Verifica se a propriedade existe e é um array
-          if (Array.isArray(item[key])) {
-            processedItem[key] = processLevel(item[key], propSchema.items, level + 1);
-          } else {
-            console.warn('Propriedade array', key, 'não encontrada ou não é um array no nível', level);
-            // Opcional: Atribuir um valor padrão se necessário
-            // processedItem[key] = []; // Por exemplo
-          }
-        } else {
-          if (Array.isArray(item) && item.length > 0) {
-            processedItem[key] = item[0][key];
-          } else {
-            console.error(`Propriedade ${key} não encontrada no nível`, level);
-          }
-        }
-      }
-      return processedItem;
-    });
+    // Agrupa os dados com base nas propriedades especificadas e processa cada grupo
+    const groupedData = groupBySpecifiedProperties(inputData.flat(2), groupingProperties);
+    return createTopLevelObjects(groupedData, groupingProperties);
+  } catch (error) {
+    console.error(`Erro ao processar os dados: ${error.message}`);
+    return []; // Retorna um array vazio em caso de erro
   }
+}
 
-  // Agrupa os dados de entrada
-  const groupedInputData = groupDataByProperties(inputData.flat(2), groupingProperties);
 
-  return Object.values(groupedInputData).map(group => {
-    let topLevelObject = {};
+// Agrupa dados com base em propriedades especificadas
+function groupBySpecifiedProperties(data, properties) {
+  const groupedData = {};
+  data.forEach(item => {
+    // Cria uma chave única para cada grupo com base nas propriedades especificadas
+    const key = properties.map(prop => item[prop]).join('_');
+    if (!groupedData[key]) {
+      groupedData[key] = [];
+    }
+    groupedData[key].push(item);
+  });
+  return groupedData;
+}
+
+// Cria objetos de nível superior com base nos dados agrupados
+function createTopLevelObjects(groupedData, groupingProperties) {
+  return Object.values(groupedData).map(group => {
+    // Inicializa o objeto de nível superior com base no primeiro item do grupo
+    let topLevelObject = createInitialTopLevelObject(group[0], groupingProperties);
+
+    // Processa cada item do grupo para adicionar objetos de nível 2
     group.forEach(item => {
-      groupingProperties.forEach(prop => {
-        topLevelObject[prop] = item[prop];
-      });
-      let level2Object = {};
-      Object.keys(item).forEach(key => {
-        if (!groupingProperties.includes(key)) {
-          level2Object[key] = item[key];
-        }
-      });
-      if (!topLevelObject.level2) {
-        topLevelObject.level2 = [];
-      }
+      const level2Object = createLevel2Object(item, groupingProperties);
       topLevelObject.level2.push(level2Object);
     });
+
     return topLevelObject;
   });
 }
 
+// Cria um objeto de nível superior inicial com base no primeiro item do grupo
+function createInitialTopLevelObject(item, groupingProperties) {
+  let topLevelObject = {};
+  groupingProperties.forEach(prop => {
+    topLevelObject[prop] = item[prop]; // Define cada propriedade de agrupamento no objeto de nível superior
+  });
+  topLevelObject.level2 = []; // Inicializa o array para objetos de nível 2
+  return topLevelObject;
+}
 
-
-// export function populateObjectsFromData(inputData, jsonSchema) {
-//   if (!Array.isArray(inputData) || typeof jsonSchema !== 'object') {
-//     console.error('Dados de entrada ou schema JSON inválidos');
-//     return;
-//   }
-
-//   function processLevel(data, schema, level) {
-//     if (!Array.isArray(data)) {
-//       console.error('Dados esperados como array no nível', level);
-//       return [];
-//     }
-
-//     return data.map(item => {
-//       let processedItem = {};
-//       for (let key in schema.properties) {
-//         const propSchema = schema.properties[key];
-//         if (propSchema.type === "array") {
-//           // Verifica se a propriedade existe e é um array
-//           if (Array.isArray(item[key])) {
-//             processedItem[key] = processLevel(item[key], propSchema.items, level + 1);
-//           } else {
-//             console.warn('Propriedade array', key, 'não encontrada ou não é um array no nível', level);
-//             // Opcional: Atribuir um valor padrão se necessário
-//             // processedItem[key] = []; // Por exemplo
-//           }
-//         } else {
-//           if (Array.isArray(item) && item.length > 0) {
-//             processedItem[key] = item[0][key];
-//           } else {
-//             console.error(`Propriedade ${key} não encontrada no nível`, level);
-//           }
-//         }
-//       }
-//       return processedItem;
-//     });
-//   }
-
-//   return processLevel(inputData[0], jsonSchema, 1);
-// }
+// Cria um objeto de nível 2 com base no item atual
+function createLevel2Object(item, groupingProperties) {
+  let level2Object = {};
+  Object.keys(item).forEach(key => {
+    // Inclui no objeto de nível 2 todas as propriedades que não são de agrupamento
+    if (!groupingProperties.includes(key)) {
+      level2Object[key] = item[key];
+    }
+  });
+  return level2Object;
+}
