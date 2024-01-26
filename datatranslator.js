@@ -1,4 +1,8 @@
-// Função para normalizar as chaves de um objeto para minúsculas
+/**
+ * Normaliza as chaves de um objeto para minúsculas.
+ * @param {Object} obj - Objeto com chaves para normalizar.
+ * @returns {Object} Objeto com chaves normalizadas.
+ */
 function normalizeKeys(obj) {
   return Object.keys(obj).reduce((acc, key) => {
     acc[key.toLowerCase()] = obj[key];
@@ -6,44 +10,55 @@ function normalizeKeys(obj) {
   }, {});
 }
 
-// Função de tradução modificada para lidar com um array de objetos
+/**
+ * Transforma um array de objetos no formato necessário para a lista dupla.
+ * @param {Array} inputArray - Array de objetos a serem transformados.
+ * @param {Object} keyMapping - Mapeamento de chaves para transformação.
+ * @returns {Array} Array de objetos transformados.
+ */
 export function translateToDualListBoxFormat(inputArray, keyMapping) {
-  return inputArray.map(inputObject => {
-    const normalizedInput = normalizeKeys(inputObject);
+  return inputArray
+    .map((inputObject) => {
+      const normalizedInput = normalizeKeys(inputObject);
 
-    const idLevel1Key = keyMapping.idlevel1 && normalizedInput[keyMapping.idlevel1.toLowerCase()];
-    const level1NameKey = keyMapping.level1name && normalizedInput[keyMapping.level1name.toLowerCase()];
-    if (!idLevel1Key || !level1NameKey) {
-      console.error("idlevel1 ou level1name obrigatório não encontrado no objeto.");
-      return null;
-    };
+      const idLevel1Key =
+        keyMapping.idlevel1 &&
+        normalizedInput[keyMapping.idlevel1.toLowerCase()];
+      const level1NameKey =
+        keyMapping.level1name &&
+        normalizedInput[keyMapping.level1name.toLowerCase()];
+      if (!idLevel1Key || !level1NameKey) {
+        console.error(
+          "idlevel1 ou level1name obrigatório não encontrado no objeto."
+        );
+        return null;
+      }
 
-    const translatedObject = {
-      idlevel1: idLevel1Key,
-      level1name: level1NameKey,
-      level2: []
-    };
+      const translatedObject = {
+        idlevel1: idLevel1Key,
+        level1name: level1NameKey,
+        level2: [],
+      };
 
-    // Ajuste aqui: Assegurando que o mapeamento para os níveis 2 está correto
-    const levels2Data = normalizedInput[keyMapping.levels2.toLowerCase()];
-    if (levels2Data && Array.isArray(levels2Data)) {
-      levels2Data.forEach(level2Item => {
-        const normalizedLevel2 = normalizeKeys(level2Item);
-        if (normalizedLevel2['idlevel2'] && normalizedLevel2['level2name']) {
-          translatedObject.level2.push({
-            idlevel2: normalizedLevel2['idlevel2'],
-            level2name: normalizedLevel2['level2name']
-          });
-        }
-      });
-    } else {
-      console.error("Levels2 não encontrado ou não é um array.");
-    }
-    return translatedObject;
-  }).filter(item => item != null); // Filtra os objetos nulos
+      // Ajuste aqui: Assegurando que o mapeamento para os níveis 2 está correto
+      const levels2Data = normalizedInput[keyMapping.levels2.toLowerCase()];
+      if (levels2Data && Array.isArray(levels2Data)) {
+        levels2Data.forEach((level2Item) => {
+          const normalizedLevel2 = normalizeKeys(level2Item);
+          if (normalizedLevel2["idlevel2"] && normalizedLevel2["level2name"]) {
+            translatedObject.level2.push({
+              idlevel2: normalizedLevel2["idlevel2"],
+              level2name: normalizedLevel2["level2name"],
+            });
+          }
+        });
+      } else {
+        console.error("Levels2 não encontrado ou não é um array.");
+      }
+      return translatedObject;
+    })
+    .filter((item) => item != null); // Filtra os objetos nulos
 }
-
-
 
 /**
  * Valida um esquema JSON contra um conjunto de regras.
@@ -54,12 +69,12 @@ export function translateToDualListBoxFormat(inputArray, keyMapping) {
  * @returns {boolean} Retorna true se o esquema é válido, false caso contrário.
  */
 export function validateSchema(schema) {
-  if (typeof schema !== 'object' || schema === null) {
+  if (typeof schema !== "object" || schema === null) {
     console.error("Esquema fornecido não é um objeto válido.");
     return false;
   }
 
-  if (schema.type !== 'object' || typeof schema.properties !== 'object') {
+  if (schema.type !== "object" || typeof schema.properties !== "object") {
     console.error("Esquema de objeto esperado com propriedades definidas.");
     return false;
   }
@@ -67,14 +82,23 @@ export function validateSchema(schema) {
   for (const key in schema.properties) {
     const property = schema.properties[key];
 
-    if (typeof property !== 'object' || typeof property.type !== 'string') {
-      console.error(`Propriedade '${key}' no esquema não é definida corretamente.`);
+    if (typeof property !== "object" || typeof property.type !== "string") {
+      console.error(
+        `Propriedade '${key}' no esquema não é definida corretamente.`
+      );
       return false;
     }
 
     // Validação recursiva para propriedades do tipo 'object' e 'array'
-    if ((property.type === 'object' && property.properties && !validateSchema(property)) ||
-      (property.type === 'array' && (!property.items || typeof property.items !== 'object' || !validateSchema(property.items)))) {
+    if (
+      (property.type === "object" &&
+        property.properties &&
+        !validateSchema(property)) ||
+      (property.type === "array" &&
+        (!property.items ||
+          typeof property.items !== "object" ||
+          !validateSchema(property.items)))
+    ) {
       return false;
     }
   }
@@ -82,17 +106,20 @@ export function validateSchema(schema) {
   return true;
 }
 
-
 export function transformAndCompareWithSchema(array, schema) {
   function transformObject(obj, schemaProperties) {
     const transformed = {};
     for (const key in schemaProperties) {
       const property = schemaProperties[key];
 
-      if (property.type === 'array' && property.items && property.items.properties) {
+      if (
+        property.type === "array" &&
+        property.items &&
+        property.items.properties
+      ) {
         // Cria um array para as propriedades do tipo array
         transformed[key] = [transformObject(obj, property.items.properties)];
-      } else if (typeof obj[key] !== 'undefined') {
+      } else if (typeof obj[key] !== "undefined") {
         // Copia o valor se existir no objeto
         transformed[key] = obj[key];
       }
@@ -113,16 +140,20 @@ export function transformAndCompareWithSchema(array, schema) {
   return true;
 }
 
-function compareObjectWithSchema(obj, schemaProperties) {
+export function compareObjectWithSchema(obj, schemaProperties) {
   for (const key in schemaProperties) {
-    if (typeof obj[key] === 'undefined') {
+    if (typeof obj[key] === "undefined") {
       console.log(`Propriedade faltando: ${key}`);
       return false;
     }
     const property = schemaProperties[key];
-    if (property.type === 'array') {
+    if (property.type === "array") {
       if (!Array.isArray(obj[key])) {
-        console.log(`Esperado array, encontrado: ${typeof obj[key]} para a propriedade ${key}`);
+        console.log(
+          `Esperado array, encontrado: ${typeof obj[
+            key
+          ]} para a propriedade ${key}`
+        );
         return false;
       }
       if (property.items && property.items.properties) {
@@ -133,7 +164,11 @@ function compareObjectWithSchema(obj, schemaProperties) {
         }
       }
     } else if (typeof obj[key] !== property.type) {
-      console.log(`Tipo incorreto para ${key}: esperado ${property.type}, encontrado ${typeof obj[key]}`);
+      console.log(
+        `Tipo incorreto para ${key}: esperado ${
+          property.type
+        }, encontrado ${typeof obj[key]}`
+      );
       return false;
     }
   }
@@ -147,10 +182,16 @@ export function buildObjectFromSchema(array, schema) {
     for (const key in schemaProperties) {
       const property = schemaProperties[key];
 
-      if (property.type === 'array' && property.items && property.items.properties) {
+      if (
+        property.type === "array" &&
+        property.items &&
+        property.items.properties
+      ) {
         // Para propriedades do tipo array, processa os itens do array conforme definido em 'items.properties'
         if (Array.isArray(obj)) {
-          resultObj[key] = obj.map(item => processObject(item, property.items.properties));
+          resultObj[key] = obj.map((item) =>
+            processObject(item, property.items.properties)
+          );
         } else {
           // Se a propriedade esperada é um array, mas o objeto atual não é, inicializa como um array vazio
           resultObj[key] = [];
@@ -191,7 +232,7 @@ export function createEmptyObjectFromSchema(schema) {
 
     for (const key in schemaProperties) {
       const property = schemaProperties[key];
-      if (property.type === 'array') {
+      if (property.type === "array") {
         if (property.items && property.items.properties) {
           // Cria uma estrutura de objeto para cada item no array
           resultObj[key] = [createObject(property.items.properties)];
@@ -211,74 +252,6 @@ export function createEmptyObjectFromSchema(schema) {
   return createObject(schema.properties);
 }
 
-export function fillObjectWithData(emptyObj, dataArray, schema) {
-  // Reset the level2 array to avoid initializing with a null object
-  emptyObj.level2 = [];
-
-  for (let i = 0; i < dataArray.length; i++) {
-    for (let j = 0; j < dataArray[i].length; j++) {
-      for (let k = 0; k < dataArray[i][j].length; k++) {
-        const dataItem = dataArray[i][j][k];
-        const schemaProperties = schema.properties;
-
-        // Populate the top-level properties
-        for (const key in schemaProperties) {
-          if (schemaProperties[key].type !== 'array') {
-            emptyObj[key] = dataItem[key];
-          } else {
-            // Handle nested array properties
-            const nestedArraySchema = schemaProperties[key].items.properties;
-            const nestedObj = {};
-            let hasData = false;
-
-            for (const nestedKey in nestedArraySchema) {
-              nestedObj[nestedKey] = dataItem[nestedKey];
-              if (dataItem[nestedKey] !== null && dataItem[nestedKey] !== undefined) {
-                hasData = true;
-              }
-            }
-
-            // Only add the nested object if it has data
-            if (hasData) {
-              emptyObj[key].push(nestedObj);
-            }
-          }
-        }
-      }
-    }
-  }
-  return emptyObj;
-}
-
-
-function mergeOrAddItem(resultArray, newItem, primaryKey) {
-  const existingItemIndex = resultArray.findIndex(item => item[primaryKey] === newItem[primaryKey]);
-
-  if (existingItemIndex !== -1) {
-    // Mescla os dados se o item já existir
-    resultArray[existingItemIndex] = { ...resultArray[existingItemIndex], ...newItem };
-  } else {
-    // Adiciona um novo item se não existir
-    resultArray.push(newItem);
-  }
-}
-
-function processItem(item, schemaProperties, level) {
-  const newItem = {};
-
-  for (const key in schemaProperties) {
-    if (schemaProperties[key].type === 'array' && item[key]) {
-      newItem[`level${level}`] = item[key].map(subItem => processItem(subItem, schemaProperties[key].items.properties, level + 1));
-    } else if (item[key]) {
-      newItem[`idlevel${level}`] = item[key];
-      newItem[`level${level}name`] = key;
-    }
-  }
-
-  return newItem;
-}
-
-
 /**
  * Processa dados de entrada com base em um esquema JSON e propriedades de agrupamento.
  * Agrupa dados com base nas propriedades especificadas e processa cada nível de aninhamento.
@@ -287,28 +260,76 @@ function processItem(item, schemaProperties, level) {
  * @param {object} jsonSchema - O esquema JSON usado para o processamento dos dados.
  * @param {array} groupingProperties - Propriedades usadas para agrupar os dados.
  */
-export function populateObjectsFromData(inputData, jsonSchema, groupingProperties) {
+export function populateObjectsFromData(inputData, jsonSchema) {
   try {
-    if (!Array.isArray(inputData) || typeof jsonSchema !== 'object' || !Array.isArray(groupingProperties)) {
-      throw new Error('Dados de entrada, esquema JSON ou propriedades de agrupamento inválidos.');
+    if (!Array.isArray(inputData) || typeof jsonSchema !== "object") {
+      throw new Error("Dados de entrada ou esquema JSON inválidos.");
     }
 
-    // Agrupa os dados com base nas propriedades especificadas e processa cada grupo
-    const groupedData = groupBySpecifiedProperties(inputData.flat(2), groupingProperties);
-    return createTopLevelObjects(groupedData, groupingProperties);
+    // Valida o esquema JSON
+    if (!validateSchema(jsonSchema)) {
+      throw new Error("Esquema JSON inválido.");
+    }
+
+    // Identifica automaticamente ID e Nome
+    const [idKey, nameKey] = identifyIdAndNameKeys(inputData, jsonSchema);
+
+    // Agrupa os dados com base no ID e Nome identificados
+    const groupedData = groupBySpecifiedProperties(inputData.flat(2), [
+      idKey,
+      nameKey,
+    ]);
+    return createTopLevelObjects(groupedData, [idKey, nameKey]);
   } catch (error) {
     console.error(`Erro ao processar os dados: ${error.message}`);
     return []; // Retorna um array vazio em caso de erro
   }
 }
+/**
+ * Identifica as chaves de ID e Nome no esquema JSON fornecido.
+ *
+ * A função percorre as propriedades do esquema JSON e identifica:
+ * - A primeira propriedade do tipo 'number' como a chave de ID.
+ * - A primeira propriedade do tipo 'string' como a chave de Nome.
+ *
+ * Se uma chave de ID não for encontrada, a função lança um erro.
+ * Se uma chave de Nome não for encontrada, a chave de ID é usada como Nome.
+ *
+ * @param {Object} schema O esquema JSON no qual as chaves serão identificadas.
+ * @returns {Array} Um array contendo a chave de ID e a chave de Nome.
+ * @throws {Error} Se uma chave de ID não for encontrada no esquema.
+ */
+export function identifyIdAndNameKeys(data, schema) {
+  let idKey = null;
+  let nameKey = null;
 
+  for (const key in schema.properties) {
+    if (schema.properties[key].type === "number" && !idKey) {
+      idKey = key;
+    } else if (schema.properties[key].type === "string" && !nameKey) {
+      nameKey = key;
+    }
+
+    if (idKey && nameKey) break;
+  }
+
+  if (!idKey) {
+    throw new Error("ID não encontrado nos dados.");
+  }
+
+  if (!nameKey) {
+    nameKey = idKey; // Usa ID como Nome se um Nome não for encontrado
+  }
+
+  return [idKey, nameKey];
+}
 
 // Agrupa dados com base em propriedades especificadas
-function groupBySpecifiedProperties(data, properties) {
+export function groupBySpecifiedProperties(data, properties) {
   const groupedData = {};
-  data.forEach(item => {
+  data.forEach((item) => {
     // Cria uma chave única para cada grupo com base nas propriedades especificadas
-    const key = properties.map(prop => item[prop]).join('_');
+    const key = properties.map((prop) => item[prop]).join("_");
     if (!groupedData[key]) {
       groupedData[key] = [];
     }
@@ -318,13 +339,16 @@ function groupBySpecifiedProperties(data, properties) {
 }
 
 // Cria objetos de nível superior com base nos dados agrupados
-function createTopLevelObjects(groupedData, groupingProperties) {
-  return Object.values(groupedData).map(group => {
+export function createTopLevelObjects(groupedData, groupingProperties) {
+  return Object.values(groupedData).map((group) => {
     // Inicializa o objeto de nível superior com base no primeiro item do grupo
-    let topLevelObject = createInitialTopLevelObject(group[0], groupingProperties);
+    let topLevelObject = createInitialTopLevelObject(
+      group[0],
+      groupingProperties
+    );
 
     // Processa cada item do grupo para adicionar objetos de nível 2
-    group.forEach(item => {
+    group.forEach((item) => {
       const level2Object = createLevel2Object(item, groupingProperties);
       topLevelObject.level2.push(level2Object);
     });
@@ -334,9 +358,9 @@ function createTopLevelObjects(groupedData, groupingProperties) {
 }
 
 // Cria um objeto de nível superior inicial com base no primeiro item do grupo
-function createInitialTopLevelObject(item, groupingProperties) {
+export function createInitialTopLevelObject(item, groupingProperties) {
   let topLevelObject = {};
-  groupingProperties.forEach(prop => {
+  groupingProperties.forEach((prop) => {
     topLevelObject[prop] = item[prop]; // Define cada propriedade de agrupamento no objeto de nível superior
   });
   topLevelObject.level2 = []; // Inicializa o array para objetos de nível 2
@@ -344,13 +368,117 @@ function createInitialTopLevelObject(item, groupingProperties) {
 }
 
 // Cria um objeto de nível 2 com base no item atual
-function createLevel2Object(item, groupingProperties) {
+export function createLevel2Object(item, groupingProperties) {
   let level2Object = {};
-  Object.keys(item).forEach(key => {
+  Object.keys(item).forEach((key) => {
     // Inclui no objeto de nível 2 todas as propriedades que não são de agrupamento
     if (!groupingProperties.includes(key)) {
       level2Object[key] = item[key];
     }
   });
   return level2Object;
+}
+
+/**
+ * Preenche um elemento dropdown com dados processados.
+ *
+ * Esta função processa dados brutos com base em um esquema JSON fornecido
+ * e preenche um elemento dropdown com opções criadas a partir desses dados.
+ * Cada opção no dropdown é baseada em propriedades identificadas nos dados processados,
+ * tipicamente um 'id' e um 'nome'.
+ *
+ * @param {HTMLElement} dropdown O elemento dropdown que será preenchido com opções.
+ * @param {Array} rawData Os dados brutos que serão processados.
+ * @param {Object} jsonSchema O esquema JSON usado para processar os dados.
+ * @throws {Error} Se o dropdown, os dados brutos ou o esquema JSON forem inválidos.
+ */
+export function populateDropdown(dropdown, rawData, jsonSchema) {
+  try {
+    if (
+      !dropdown ||
+      !Array.isArray(rawData) ||
+      typeof jsonSchema !== "object"
+    ) {
+      throw new Error("Dropdown, dados brutos ou esquema JSON inválidos.");
+    }
+
+    // Agrupa os dados por categoria
+    const groupedData = groupByCategory(rawData);
+
+    dropdown.innerHTML = "";
+
+    // Itera sobre cada categoria e cria um optgroup
+    for (const idcategory in groupedData) {
+      const category = groupedData[idcategory];
+      const groupElement = document.createElement("optgroup");
+      groupElement.label = category.categoryname || "Categoria sem nome";
+
+      // Adiciona opções para cada item na categoria
+      category.items.forEach((item) => {
+        const option = document.createElement("option");
+        option.value = item.idsession; // Supondo que 'idsession' seja a propriedade do valor da opção
+        option.textContent = item.linkname; // Supondo que 'linkname' seja a propriedade do texto da opção
+        groupElement.appendChild(option);
+      });
+
+      dropdown.appendChild(groupElement);
+    }
+  } catch (error) {
+    console.error(`Erro ao popular dropdown: ${error.message}`);
+  }
+}
+
+function groupByCategory(data) {
+  const grouped = {};
+  data.forEach((level1Array) => {
+    level1Array.forEach((level2Array) => {
+      level2Array.forEach((item) => {
+        if (!grouped[item.idcategory]) {
+          grouped[item.idcategory] = {
+            categoryname: item.categoryname,
+            items: [],
+          };
+        }
+        grouped[item.idcategory].items.push(item);
+      });
+    });
+  });
+  return grouped;
+}
+export function updateLinkName(data, schema) {
+  const STRING_PADRAO = "Gobrunch"; // Define a string padrão
+
+  data.forEach((level1) => {
+    level1.forEach((level2) => {
+      level2.forEach((item) => {
+        if ((item, schema.properties.level2.items.properties)) {
+          if (item.ismeeting === 1 && item.HasMeetingURL === 1) {
+            item.linkname = STRING_PADRAO;
+          }
+        }
+      });
+    });
+  });
+}
+
+export function prepareAndMoveItems(list, data, moveOptionFunc, selectedList) {
+  function processItems(levelItems) {
+    levelItems.forEach((item) => {
+      if (item.level2 && Array.isArray(item.level2)) {
+        item.level2.forEach((subItem) => {
+          if (subItem.inproduct === 1) {
+            const optionToMove = list.querySelector(
+              `option[value="${subItem.idsession}"]`
+            );
+            if (optionToMove && !optionToMove.selected) {
+              optionToMove.selected = true;
+              moveOptionFunc(list, selectedList, optionToMove);
+            }
+          }
+        });
+      }
+    });
+  }
+
+  processItems(data);
 }
