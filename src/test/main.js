@@ -1,14 +1,14 @@
+import { updateMeetingName } from "../utils/scripts/dataprocessutils.js";
+import { DualListBox } from "../utils/classes/duallistbox.js";
 import {
   validateSchema,
-  transformAndCompareWithSchema,
-  buildObjectFromSchema,
+  compareDataWithSchema,
   createEmptyObjectFromSchema,
+} from "../js/datamanipulation/manipulation.js";
+import {
   populateObjectsFromData,
   populateDropdown,
-  compareObjectWithSchema,
-  updateLinkName,
-} from "./datatranslator.js";
-import { DualListBox } from "./duallistbox.js";
+} from "../js/datamanipulation/datapopulation/population.js";
 
 var listBoxSelectors = {
   availableList: "#availableEvents",
@@ -94,7 +94,7 @@ const dadosDeEntrada2 = [
         currentevent: 0,
         idcategory: 2121,
         categoryname: "coworking",
-        inproduct: 1,
+        inproduct: 0,
         ismeeting: 1,
       },
     ],
@@ -109,12 +109,10 @@ const dadosDeEntrada2 = [
         currentevent: 0,
         idcategory: 2121,
         categoryname: "coworking",
-        inproduct: 1,
+        inproduct: 0,
         ismeeting: 1,
       },
     ],
-  ],
-  [
     [
       {
         idevent: 21512,
@@ -124,22 +122,7 @@ const dadosDeEntrada2 = [
         idcategory: 21521,
         categoryname: "meeting",
         ismeeting: 1,
-        inproduct: 1,
-      },
-    ],
-    [
-      {
-        idevent: 3381821,
-        eventname: "davi",
-        idsession: 5062822,
-        linkname: "davi brunch",
-        datesessionstart: "2023-12-23 14:22:20",
-        HasMeetingURL: 0,
-        currentevent: 0,
-        idcategory: 2121,
-        categoryname: "coworking",
         inproduct: 0,
-        ismeeting: 1,
       },
     ],
   ],
@@ -248,29 +231,32 @@ const jsonSchema2 = {
   required: ["idcategory", "categoryname", "level2"],
 };
 
-const isValidSchema = validateSchema(jsonSchema);
-console.log("O schema é válido:", isValidSchema);
+document.addEventListener("DOMContentLoaded", function () {
+  const isValidSchema = validateSchema(jsonSchema);
+  console.log("O schema é válido:", isValidSchema);
 
-const isValid = transformAndCompareWithSchema(dadosDeEntrada2, jsonSchema);
-console.log("A estrutura do array corresponde ao schema:", isValid);
+  const isValid = compareDataWithSchema(dadosDeEntrada2, jsonSchema);
+  console.log("A estrutura do array corresponde ao schema:", isValid);
 
-const builtObject = buildObjectFromSchema(dadosDeEntrada2, jsonSchema);
-console.log(builtObject);
+  const emptyObject = createEmptyObjectFromSchema(jsonSchema);
+  console.log(emptyObject);
 
-const emptyObject = createEmptyObjectFromSchema(jsonSchema);
-console.log(emptyObject);
+  const dropdown = document.getElementById("meuDropdown");
 
-const result = populateObjectsFromData(dadosDeEntrada2, jsonSchema);
-console.log(result);
+  // cria a variavel com dados populados
 
-if (result) {
-  var dualListBox = new DualListBox(listBoxSelectors, result);
-  dualListBox.render();
-}
+  // altera os valores do linkname
+  // updateMeetingName(dadosDeEntrada2);
+  const result = populateObjectsFromData(dadosDeEntrada2, jsonSchema);
+  console.log(dadosDeEntrada2);
 
-// Preenche o dropdown com os dados de teste
-const dropdown = document.getElementById("meuDropdown");
+  populateDropdown(dropdown, dadosDeEntrada2, jsonSchema2);
+  console.log(result);
 
-const a = updateLinkName(dadosDeEntrada2, jsonSchema2);
-console.log(dadosDeEntrada2);
-populateDropdown(dropdown, dadosDeEntrada2, jsonSchema2);
+  // Preenche o dropdown com os dados de teste
+
+  if (result) {
+    var dualListBox = new DualListBox(listBoxSelectors, result);
+    dualListBox.render();
+  }
+});

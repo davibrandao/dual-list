@@ -17,5 +17,6 @@ select {
 }
 
 optgroup.selected {
-  color: blue;
+  color: white;
+  background-color: #1967d2;
 }
