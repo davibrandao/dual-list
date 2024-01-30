@@ -1,14 +1,16 @@
-import { updateMeetingName } from "../utils/scripts/dataprocessutils.js";
+import {
+  getValuesFromElement,
+  populateDropdown,
+  shouldUsePatternStringForItem,
+  updateMeetingName,
+} from "../utils/scripts/dataprocessutils.js";
 import { DualListBox } from "../utils/classes/duallistbox.js";
 import {
   validateSchema,
   compareDataWithSchema,
   createEmptyObjectFromSchema,
 } from "../js/datamanipulation/manipulation.js";
-import {
-  populateObjectsFromData,
-  populateDropdown,
-} from "../js/datamanipulation/datapopulation/population.js";
+import { populateObjectsFromData } from "../js/datamanipulation/datapopulation/population.js";
 
 var listBoxSelectors = {
   availableList: "#availableEvents",
@@ -79,7 +81,7 @@ const dadosDeEntrada2 = [
         currentevent: 0,
         idcategory: 2121,
         categoryname: "coworking",
-        inproduct: 0,
+        inproduct: 1,
         ismeeting: 1,
       },
     ],
@@ -121,8 +123,8 @@ const dadosDeEntrada2 = [
         HasMeetingURL: 1,
         idcategory: 21521,
         categoryname: "meeting",
+        inproduct: 1,
         ismeeting: 1,
-        inproduct: 0,
       },
     ],
   ],
@@ -234,7 +236,6 @@ const jsonSchema2 = {
 document.addEventListener("DOMContentLoaded", function () {
   const isValidSchema = validateSchema(jsonSchema);
   console.log("O schema é válido:", isValidSchema);
-
   const isValid = compareDataWithSchema(dadosDeEntrada2, jsonSchema);
   console.log("A estrutura do array corresponde ao schema:", isValid);
 
@@ -242,13 +243,7 @@ document.addEventListener("DOMContentLoaded", function () {
   console.log(emptyObject);
 
   const dropdown = document.getElementById("meuDropdown");
-
-  // cria a variavel com dados populados
-
-  // altera os valores do linkname
-  // updateMeetingName(dadosDeEntrada2);
   const result = populateObjectsFromData(dadosDeEntrada2, jsonSchema);
-  console.log(dadosDeEntrada2);
 
   populateDropdown(dropdown, dadosDeEntrada2, jsonSchema2);
   console.log(result);

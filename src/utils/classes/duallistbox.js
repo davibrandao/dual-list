@@ -1,5 +1,6 @@
 import {
   createOptGroup,
+  getValuesFromElement,
   prepareAndMoveItems,
   processSublevels,
   updateMeetingName,
@@ -84,8 +85,9 @@ export class DualListBox {
    * moved between the lists and option groups to be selected or deselected.
    */
   attachEventHandlers() {
-    this.btnAdd.onclick = () =>
+    this.btnAdd.onclick = () => {
       this.moveItems(this.availableList, this.selectedList);
+    };
     this.btnRemove.onclick = () =>
       this.moveItems(this.selectedList, this.availableList);
     this.availableList.addEventListener("click", (event) =>
@@ -94,7 +96,12 @@ export class DualListBox {
     this.selectedList.addEventListener("click", (event) =>
       this.toggleOptGroupSelection(event)
     );
-    this.btnSave.onclick = () => console.log(this.getSelectedItems());
+    this.btnSave.onclick = () => {
+      console.log(this.getSelectedItems());
+      // Após mover os itens, obtenha os valores de 'selectedEvents'
+      const values = getValuesFromElement("selectedEvents", "value", "option");
+      console.log(values); // Exibe os valores no console
+    };
   }
 
   /**

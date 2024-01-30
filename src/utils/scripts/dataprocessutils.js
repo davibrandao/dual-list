@@ -1,3 +1,5 @@
+import { DualListBox } from "../classes/duallistbox.js";
+
 /**
  * Groups data by category.
  *
@@ -35,14 +37,19 @@ export function groupByCategory(data) {
  * is marked as a meeting and has a meeting URL, its 'linkname' is set to a predefined pattern string.
  *
  * @param {Array} data - The nested array of data containing the items to be updated.
+ * @param {string} PATTERN_STRING - The default string to be used if conditions are met.
  */
 export function updateMeetingName(data) {
   const PATTERN_STRING = "Gobrunch";
 
-  data.forEach((item) => {
-    if (item.ismeeting === 1 && item.HasMeetingURL === 1) {
-      item.linkname = PATTERN_STRING;
-    }
+  data.forEach((level1Array) => {
+    level1Array.forEach((level2Array) => {
+      level2Array.forEach((item) => {
+        if (item.ismeeting === 1 && item.HasMeetingURL === 1) {
+          item.linkname = PATTERN_STRING;
+        }
+      });
+    });
   });
 }
 
@@ -97,13 +104,14 @@ export function createOptGroup(groupName, groupId) {
 /**
  * Checks if PATTERN_STRING should be used based on the conditions of the subitems.
  *
- * @param {Array} subItems - Array of subitems to be checked.
- * @returns {boolean} Returns true if PATTERN_STRING should be used, false otherwise.
+ * @param {Object} subItem - The subitem to be checked.
+ * @param {string} PATTERN_STRING - The default string to be used if conditions are met.
+ * @returns {string} The updated linkname.
  */
-function shouldUsePatternString(subItems) {
-  return subItems.some(
-    (subItem) => subItem.ismeeting === 1 && subItem.HasMeetingURL === 1
-  );
+export function shouldUsePatternStringForItem(subItem, PATTERN_STRING) {
+  return subItem.ismeeting === 1 && subItem.HasMeetingURL === 1
+    ? PATTERN_STRING
+    : subItem.linkname;
 }
 
 /**
@@ -114,20 +122,27 @@ function shouldUsePatternString(subItems) {
  * @param {string} PATTERN_STRING - The default string to be used if conditions are met.
  * @returns {HTMLElement} The created 'option' element.
  */
-function createOptionElement(subItem, usePatternString, PATTERN_STRING) {
-  let subItemName = subItem.linkname || "Item name not found";
-  let subItemId = subItem.idsession || "Item ID not found";
-
-  if (usePatternString) {
-    subItemName = PATTERN_STRING;
-  }
-
+function createOptionElement(subItemName, subItemId) {
   var option = document.createElement("option");
   option.value = subItemId;
   option.textContent = subItemName;
   return option;
 }
 
+function updateOptGroupLabelIfRequired(
+  subItems,
+  parentElement,
+  PATTERN_STRING,
+  alterGroupLabel
+) {
+  const usePatternString = subItems.some(
+    (subItem) => subItem.ismeeting === 1 && subItem.HasMeetingURL === 1
+  );
+
+  if (usePatternString && alterGroupLabel) {
+    parentElement.label = PATTERN_STRING;
+  }
+}
 /**
  * Processes sublevel items and appends them as options to a parent element.
  *
@@ -138,7 +153,7 @@ function createOptionElement(subItem, usePatternString, PATTERN_STRING) {
  * @param {Array} subItems - The array of sublevel items to be processed.
  * @param {HTMLElement} parentElement - The parent element to which options will be appended.
  * @param {string} PATTERN_STRING - The default string to be used if conditions are met.
- * @param {boolean} alterGroupLabel - Flag to determine if the group label should be altered.
+ * @param {boolean} alterGroupLabel - Flag to determine if the optgroup label should be altered.
  */
 export function processSublevels(
   subItems,
@@ -146,25 +161,19 @@ export function processSublevels(
   PATTERN_STRING,
   alterGroupLabel = false
 ) {
-  const usePatternString = subItems.some(
-    (subItem) => subItem.ismeeting === 1 && subItem.HasMeetingURL === 1
+  updateOptGroupLabelIfRequired(
+    subItems,
+    parentElement,
+    PATTERN_STRING,
+    alterGroupLabel
   );
 
-  if (usePatternString && alterGroupLabel) {
-    parentElement.label = PATTERN_STRING;
-  }
-
   subItems.forEach((subItem) => {
-    let subItemName = subItem.linkname || "Item name not found";
+    let subItemName = shouldUsePatternStringForItem(subItem, PATTERN_STRING);
     let subItemId = subItem.idsession || "Item ID not found";
 
-    if (usePatternString) {
-      subItemName = PATTERN_STRING;
-    }
+    const option = createOptionElement(subItemName, subItemId);
 
-    var option = document.createElement("option");
-    option.value = subItemId;
-    option.textContent = subItemName;
     parentElement.appendChild(option);
   });
 }
@@ -194,4 +203,66 @@ export function markItemsWithInproduct(data, list) {
       });
     }
   });
+}
+
+/**
+ * Populates a dropdown element with processed data.
+ *
+ * This function processes raw data based on a provided JSON schema
+ * and fills a dropdown element with options created from this data.
+ * Each option in the dropdown is based on properties identified in the processed data,
+ * typically an 'id' and a 'name'.
+ *
+ * @param {HTMLElement} dropdown The dropdown element to be filled with options.
+ * @param {Array} rawData The raw data to be processed.
+ * @param {Object} jsonSchema The JSON schema used to process the data.
+ * @throws {Error} If the dropdown, raw data, or JSON schema are invalid.
+ */
+export function populateDropdown(dropdown, rawData, jsonSchema) {
+  try {
+    if (
+      !dropdown ||
+      !Array.isArray(rawData) ||
+      typeof jsonSchema !== "object"
+    ) {
+      throw new Error("Invalid dropdown, raw data, or JSON schema.");
+    }
+
+    // Group data by category
+    const groupedData = groupByCategory(rawData);
+
+    dropdown.innerHTML = "";
+
+    // Iterate over each category and create an optgroup
+    for (const idcategory in groupedData) {
+      const category = groupedData[idcategory];
+      const groupElement = document.createElement("optgroup");
+      groupElement.label = category.categoryname || "Unnamed category";
+
+      // Use processSublevels to add options for each item in the category
+      processSublevels(
+        category.items,
+        groupElement,
+        DualListBox.PATTERN_STRING,
+        false
+      );
+
+      dropdown.appendChild(groupElement);
+    }
+  } catch (error) {
+    console.error(`Error when popping dropdown: ${error.message}`);
+  }
+}
+
+export function getValuesFromElement(selectId, propertyName, elementChild) {
+  const parentElement = document.getElementById(selectId);
+  if (!parentElement) {
+    console.error(`Element with ID '${selectId}' not found.`);
+    return [];
+  }
+
+  const childElements = Array.from(
+    parentElement.querySelectorAll(elementChild)
+  );
+  return childElements.map((element) => element[propertyName]);
 }
