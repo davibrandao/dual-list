@@ -16,7 +16,7 @@ The DualListBox project is a JavaScript-based solution for creating a dual list 
 To use this project, clone the repository to your local machine or download the source files directly.
 
 ```bash
-git clone https://github.com/your-username/dual-listbox-project.git
+git clone https://github.com/davibrandao/dual-list.git
 ```
 
 ## Usage
